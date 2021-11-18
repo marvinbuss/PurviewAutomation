@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.1.31903.286
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PurviewAutomation", "PurviewAutomation\PurviewAutomation.csproj", "{D118C02B-A249-4DFE-934A-7CE54D659BD5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D118C02B-A249-4DFE-934A-7CE54D659BD5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D118C02B-A249-4DFE-934A-7CE54D659BD5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D118C02B-A249-4DFE-934A-7CE54D659BD5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D118C02B-A249-4DFE-934A-7CE54D659BD5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {0104424E-7205-4E78-9C14-4AB26D82F0FD}
+	EndGlobalSection
+EndGlobal
