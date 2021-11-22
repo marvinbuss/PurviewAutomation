@@ -57,7 +57,7 @@ namespace PurviewAutomation
                 case "Microsoft.Storage/storageAccounts/write":
                     log.LogInformation("Storage Account deployment detected");
                     PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    BlobStorageAccountOnboarding(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
+                    StorageAccountOnboarding(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
                     break;
                 default:
                     log.LogInformation($"Unsupported Event Grid action detected: '{eventGridEventAction}'");
@@ -69,8 +69,8 @@ namespace PurviewAutomation
         /// <summary> 
         /// Creates or updates collections below the provided Purview Root collection.
         /// </summary>
-        /// <param name="scope">The scope of the resource for which the Function was triggered.</param>
-        /// <param name="log">The logger object to capture logs.</param>
+        /// <param name="scope">Scope of the resource for which the Function was triggered.</param>
+        /// <param name="log">Logger object to capture logs.</param>
         /// <remarks>
         /// The Purview Root collection name is provided as environment variable via application settings (Application Setting 'PurviewRootCollectionName').
         /// A first Purview sub-collection for the subscription is created below the Purview root collection.
@@ -117,7 +117,19 @@ namespace PurviewAutomation
             log.LogInformation($"Purview Collection creation response {response}");
         }
 
-        private static void BlobStorageAccountOnboarding(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
+        /// <summary>
+        /// Creates a Storage account data source in a Purview collection.
+        /// </summary>
+        /// <param name="resourceId">Resource ID of the Storage Account.</param>
+        /// <param name="subscriptionId">Subscription ID of the STorage Account.</param>
+        /// <param name="resourceGroupName">Resource Group Name of the storage Account.</param>
+        /// <param name="resourceName">Name of the Storage Account.</param>
+        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
+        /// <param name="log">Logger object to capture logs.</param>
+        /// <remarks>
+        /// Onboards a Storage Account to the resource group Purview Collection.
+        /// </remarks>
+        private static void StorageAccountOnboarding(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
         {
             // Create Purview Data Source Client
             var endpoint = new Uri(uriString: purviewScanEndpoint);
