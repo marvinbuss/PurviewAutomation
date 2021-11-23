@@ -43,7 +43,9 @@ namespace PurviewAutomation
                 log.LogError("Incorrect scope length");
                 throw new Exception("Incorrect scope length");
             }
-            var purviewAccountEndpoint = GetEnvironmentVariable(name: "PurviewAccountEndpoint");
+            var purviewAccountName = GetEnvironmentVariable(name: "PurviewAccountName");
+            var purviewAccountEndpoint = $"https://{purviewAccountName}.purview.azure.com/account";
+            var purviewScanEndpoint = $"https://{purviewAccountName}.purview.azure.com/scan";
             var purviewRootCollectionName = GetEnvironmentVariable(name: "PurviewRootCollectionName");
             var subscriptionId = eventGridEventScopeArray[2];
             var resourceGroupName = eventGridEventScopeArray[4];
@@ -55,7 +57,7 @@ namespace PurviewAutomation
                 case "Microsoft.Storage/storageAccounts/write":
                     log.LogInformation("Storage Account deployment detected");
                     PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    BlobStorageAccountOnboarding(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
+                    StorageAccountOnboarding(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
                     break;
                 default:
                     log.LogInformation($"Unsupported Event Grid action detected: '{eventGridEventAction}'");
@@ -67,8 +69,8 @@ namespace PurviewAutomation
         /// <summary> 
         /// Creates or updates collections below the provided Purview Root collection.
         /// </summary>
-        /// <param name="scope">The scope of the resource for which the Function was triggered.</param>
-        /// <param name="log">The logger object to capture logs.</param>
+        /// <param name="scope">Scope of the resource for which the Function was triggered.</param>
+        /// <param name="log">Logger object to capture logs.</param>
         /// <remarks>
         /// The Purview Root collection name is provided as environment variable via application settings (Application Setting 'PurviewRootCollectionName').
         /// A first Purview sub-collection for the subscription is created below the Purview root collection.
@@ -115,10 +117,22 @@ namespace PurviewAutomation
             log.LogInformation($"Purview Collection creation response {response}");
         }
 
-        private static void BlobStorageAccountOnboarding(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewAccountEndpoint, ILogger log)
+        /// <summary>
+        /// Creates a Storage account data source in a Purview collection.
+        /// </summary>
+        /// <param name="resourceId">Resource ID of the Storage Account.</param>
+        /// <param name="subscriptionId">Subscription ID of the STorage Account.</param>
+        /// <param name="resourceGroupName">Resource Group Name of the storage Account.</param>
+        /// <param name="resourceName">Name of the Storage Account.</param>
+        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
+        /// <param name="log">Logger object to capture logs.</param>
+        /// <remarks>
+        /// Onboards a Storage Account to the resource group Purview Collection.
+        /// </remarks>
+        private static void StorageAccountOnboarding(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
         {
             // Create Purview Data Source Client
-            var endpoint = new Uri(uriString: purviewAccountEndpoint);
+            var endpoint = new Uri(uriString: purviewScanEndpoint);
             var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
             var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
 
@@ -144,6 +158,72 @@ namespace PurviewAutomation
             };
             var content = RequestContent.Create(serializable: dataSourceDetails);
             var response = dataSourceClient.CreateOrUpdate(content: content);
+            log.LogInformation($"Purview Collection creation response {response}");
+
+            // Create a Purview Scan Client
+            var scanClient = new PurviewScanClient(endpoint: endpoint, dataSourceName: resourceName, scanName: "default", credential: credential);
+
+            // Create a Scan
+            var scanDetails = new
+            {
+                name = "default",
+                kind = "AzureStorageMsi",
+                properties = new
+                {
+                    scanRulesetName = "AzureStorage",
+                    scanRulesetType = "System",
+                    collection = new
+                    {
+                        referenceName = resourceGroupName,
+                        type = "CollectionReference"
+                    }
+                }
+            };
+            content = RequestContent.Create(serializable: scanDetails);
+            response = scanClient.CreateOrUpdate(content: content);
+            log.LogInformation($"Purview Collection creation response {response}");
+
+            // Create a Trigger
+            var triggerDetails = new
+            {
+                name = "default",
+                properties = new
+                {
+                    scanLevel = "Incremental",
+                    recurrence = new
+                    {
+                        frequency = "Week",
+                        interval = 1,
+                        startTime = DateTime.Now.ToString("yyyy-MM-ddThh:mm:ssZ"),
+                        timezone = "UTC",
+                        schedule = new
+                        {
+                            weekDays = new string[] { "Sunday" }
+                        }
+                    }
+                }
+            };
+            content = RequestContent.Create(serializable: scanDetails);
+            response = scanClient.CreateOrUpdateTrigger(content: content);
+            log.LogInformation($"Purview Collection creation response {response}");
+
+            // Create a Filter
+            var filterDetails = new
+            {
+                properties = new
+                {
+                    excludeUriPrefixes = new string[] { },
+                    includeUriPrefixes = new string[] { $"https://{resourceName}.blob.core.windows.net" }
+                }
+            };
+            content = RequestContent.Create(serializable: filterDetails);
+            response = scanClient.CreateOrUpdateFilter(content: content);
+            log.LogInformation($"Purview Collection creation response {response}");
+
+            // Run Scan
+            var options = new Azure.RequestOptions();
+            var guid = System.Guid.NewGuid().ToString();
+            response = scanClient.RunScan(runId: guid, options: options, scanLevel: "Full");
             log.LogInformation($"Purview Collection creation response {response}");
         }
 
