@@ -154,15 +154,15 @@ namespace PurviewAutomation
             var dataSourceDetails = new
             {
                 name = resourceName,
-                kind = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? "AdlsGen2" : "AzureStorage",
+                kind = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
                 properties = new
                 {
                     resourceId = resourceId,
                     subscriptionId = subscriptionId,
                     resourceGroup = resourceGroupName,
                     resourceName = resourceName,
-                    endpoint = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net/",
-                    location = storageAccount.Value.Data.Location,
+                    endpoint = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net/",
+                    location = storageAccount.Value.Data.Location.ToString(),
                     collection = new
                     {
                         referenceName = resourceGroupName,
@@ -181,10 +181,10 @@ namespace PurviewAutomation
             var scanDetails = new
             {
                 name = "default",
-                kind = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? "AdlsGen2Msi" : "AzureStorageMsi",
+                kind = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2Msi" : "AzureStorageMsi",
                 properties = new
                 {
-                    scanRulesetName = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? "AdlsGen2" : "AzureStorage",
+                    scanRulesetName = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
                     scanRulesetType = "System",
                     collection = new
                     {
@@ -227,7 +227,7 @@ namespace PurviewAutomation
                 properties = new
                 {
                     excludeUriPrefixes = new string[] { },
-                    includeUriPrefixes = new string[] { storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net" }
+                    includeUriPrefixes = new string[] { storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net" }
                 }
             };
             content = RequestContent.Create(serializable: filterDetails);
