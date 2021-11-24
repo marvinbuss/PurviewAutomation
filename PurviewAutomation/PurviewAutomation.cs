@@ -12,6 +12,8 @@ using Azure.Identity;
 using Azure.Messaging.EventGrid;
 using Azure.Analytics.Purview.Account;
 using Azure.Analytics.Purview.Scanning;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Storage;
 
 namespace PurviewAutomation
 {
@@ -55,21 +57,27 @@ namespace PurviewAutomation
             switch (eventGridEventAction)
             {
                 case "Microsoft.Storage/storageAccounts/write":
-                    log.LogInformation("Storage Account deployment detected");
+                    log.LogInformation("Storage Account creation detected");
                     PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    StorageAccountOnboarding(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
+                    CreateStorageAccount(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
+                    break;
+                case "Microsoft.Storage/storageAccounts/delete":
+                    log.LogInformation("Storage Account deletion detected");
+                    DeleteDataSource(resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
                     break;
                 default:
                     log.LogInformation($"Unsupported Event Grid action detected: '{eventGridEventAction}'");
                     break;
             }
-            
         }
 
         /// <summary> 
         /// Creates or updates collections below the provided Purview Root collection.
         /// </summary>
-        /// <param name="scope">Scope of the resource for which the Function was triggered.</param>
+        /// <param name="subscriptionId">Subscription ID of the resource.</param>
+        /// <param name="resourceGroupName">Resource Group Name of the Resource.</param>
+        /// <param name="purviewRootCollectionName">Name of the root collection in Purview.</param>
+        /// <param name="purviewAccountEndpoint">Account Endpoint of the Purview account.</param>
         /// <param name="log">Logger object to capture logs.</param>
         /// <remarks>
         /// The Purview Root collection name is provided as environment variable via application settings (Application Setting 'PurviewRootCollectionName').
@@ -121,7 +129,7 @@ namespace PurviewAutomation
         /// Creates a Storage account data source in a Purview collection.
         /// </summary>
         /// <param name="resourceId">Resource ID of the Storage Account.</param>
-        /// <param name="subscriptionId">Subscription ID of the STorage Account.</param>
+        /// <param name="subscriptionId">Subscription ID of the Storage Account.</param>
         /// <param name="resourceGroupName">Resource Group Name of the storage Account.</param>
         /// <param name="resourceName">Name of the Storage Account.</param>
         /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
@@ -129,26 +137,32 @@ namespace PurviewAutomation
         /// <remarks>
         /// Onboards a Storage Account to the resource group Purview Collection.
         /// </remarks>
-        private static void StorageAccountOnboarding(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
+        private static void CreateStorageAccount(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
         {
+            // Get storage account details
+            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
+            var armClient = new ArmClient(credential: credential);
+            var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"));
+            var storageAccounts = resourceGroup.GetStorageAccounts();
+            var storageAccount = storageAccounts.Get(accountName: resourceName);
+
             // Create Purview Data Source Client
             var endpoint = new Uri(uriString: purviewScanEndpoint);
-            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
             var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
 
             // Create a Data Source
             var dataSourceDetails = new
             {
                 name = resourceName,
-                kind = "AzureStorage",
+                kind = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? "AdlsGen2" : "AzureStorage",
                 properties = new
                 {
                     resourceId = resourceId,
                     subscriptionId = subscriptionId,
                     resourceGroup = resourceGroupName,
                     resourceName = resourceName,
-                    endpoint = $"https://{resourceName}.blob.core.windows.net/",
-                    location = "northeurope",  // TODO: Get resource location
+                    endpoint = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net/",
+                    location = storageAccount.Value.Data.Location,
                     collection = new
                     {
                         referenceName = resourceGroupName,
@@ -158,7 +172,7 @@ namespace PurviewAutomation
             };
             var content = RequestContent.Create(serializable: dataSourceDetails);
             var response = dataSourceClient.CreateOrUpdate(content: content);
-            log.LogInformation($"Purview Collection creation response {response}");
+            log.LogInformation($"Purview Data Source creation response: '{response}'");
 
             // Create a Purview Scan Client
             var scanClient = new PurviewScanClient(endpoint: endpoint, dataSourceName: resourceName, scanName: "default", credential: credential);
@@ -167,10 +181,10 @@ namespace PurviewAutomation
             var scanDetails = new
             {
                 name = "default",
-                kind = "AzureStorageMsi",
+                kind = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? "AdlsGen2Msi" : "AzureStorageMsi",
                 properties = new
                 {
-                    scanRulesetName = "AzureStorage",
+                    scanRulesetName = storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? "AdlsGen2" : "AzureStorage",
                     scanRulesetType = "System",
                     collection = new
                     {
@@ -181,7 +195,7 @@ namespace PurviewAutomation
             };
             content = RequestContent.Create(serializable: scanDetails);
             response = scanClient.CreateOrUpdate(content: content);
-            log.LogInformation($"Purview Collection creation response {response}");
+            log.LogInformation($"Purview Scan creation response: '{response}'");
 
             // Create a Trigger
             var triggerDetails = new
@@ -203,9 +217,9 @@ namespace PurviewAutomation
                     }
                 }
             };
-            content = RequestContent.Create(serializable: scanDetails);
+            content = RequestContent.Create(serializable: triggerDetails);
             response = scanClient.CreateOrUpdateTrigger(content: content);
-            log.LogInformation($"Purview Collection creation response {response}");
+            log.LogInformation($"Purview Scan Trigger creation response: '{response}'");
 
             // Create a Filter
             var filterDetails = new
@@ -213,18 +227,36 @@ namespace PurviewAutomation
                 properties = new
                 {
                     excludeUriPrefixes = new string[] { },
-                    includeUriPrefixes = new string[] { $"https://{resourceName}.blob.core.windows.net" }
+                    includeUriPrefixes = new string[] { storageAccount.Value.Data.IsHnsEnabled.Equals("true") ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net" }
                 }
             };
             content = RequestContent.Create(serializable: filterDetails);
             response = scanClient.CreateOrUpdateFilter(content: content);
-            log.LogInformation($"Purview Collection creation response {response}");
+            log.LogInformation($"Purview Filter creation response: '{response}'");
 
             // Run Scan
             var options = new Azure.RequestOptions();
-            var guid = System.Guid.NewGuid().ToString();
+            var guid = Guid.NewGuid().ToString();
             response = scanClient.RunScan(runId: guid, options: options, scanLevel: "Full");
-            log.LogInformation($"Purview Collection creation response {response}");
+            log.LogInformation($"Purview Scan creation response: '{response}'");
+        }
+
+        /// <summary>
+        /// Deketes a data source from in Purview.
+        /// </summary>
+        /// <param name="resourceName">Name of the resource.</param>
+        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
+        /// <param name="log">Logger object to capture logs.</param>
+        private static void DeleteDataSource(string resourceName, string purviewScanEndpoint, ILogger log)
+        {
+            // Create Purview Data Source Client
+            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
+            var endpoint = new Uri(uriString: purviewScanEndpoint);
+            var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
+
+            // Delete a Data Source
+            var response = dataSourceClient.Delete();
+            log.LogInformation($"Purview Data Source deletion response: '{response}'");
         }
 
         /// <summary>
