@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: "6.0.x"
-  WORKING_DIRECTORY: "code/"
+  WORKING_DIRECTORY: "code/PurviewAutomation/"
 
 jobs:
   build:
