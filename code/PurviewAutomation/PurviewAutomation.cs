@@ -21,7 +21,7 @@ namespace PurviewAutomation
     public static class PurviewAutomation
     {
         [FunctionName("PurviewAutomation")]
-        public static void Run([EventGridTrigger]EventGridEvent eventGridEvent, ILogger log)
+        public static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
         {
             log.LogInformation("Parsing Event Grid event data");
             var eventGridEventString = eventGridEvent.Data.ToString();
