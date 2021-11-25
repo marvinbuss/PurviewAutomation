@@ -1,0 +1,24 @@
+name: "Documentation Issue 📚"
+description: Report issues in our documentation
+title: "Documentation: "
+labels:
+  - documentation
+  - backlog
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this report! Before submitting, please make sure to search through existing issues.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Documentation Issue
+      placeholder: Please share the name of the document along with supporting points on why it requires an amendment.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: "Thanks for completing this form!"
