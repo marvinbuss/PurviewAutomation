@@ -13,6 +13,7 @@ using Azure.Messaging.EventGrid;
 using Azure.Analytics.Purview.Account;
 using Azure.Analytics.Purview.Scanning;
 using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 
 namespace PurviewAutomation
@@ -241,8 +242,46 @@ namespace PurviewAutomation
             log.LogInformation($"Purview Scan creation response: '{response}'");
         }
 
+        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
+        {
+            // Get synapse workspace details
+            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
+            var armClient = new ArmClient(credential: credential);
+            var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"));
+            var synapse = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: resourceId));
+
+            // Create Purview Data Source Client
+            var endpoint = new Uri(uriString: purviewScanEndpoint);
+            var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
+
+            // Create a Data Source
+            var dataSourceDetails = new
+            {
+                name = resourceName,
+                kind = "AzureSynapseWorkspace",
+                properties = new
+                {
+                    resourceId = resourceId,
+                    subscriptionId = subscriptionId,
+                    resourceGroup = resourceGroupName,
+                    resourceName = resourceName,
+                    serverlessSqlEndpoint = $"{resourceName}-ondemand.sql.azuresynapse.net",
+                    dedicatedSqlEndpoint = $"{resourceName}.sql.azuresynapse.net",
+                    location = synapse.Data.Location.ToString(),
+                    collection = new
+                    {
+                        referenceName = resourceGroupName,
+                        type = "CollectionReference"
+                    }
+                }
+            };
+            var content = RequestContent.Create(serializable: dataSourceDetails);
+            var response = dataSourceClient.CreateOrUpdate(content: content);
+            log.LogInformation($"Purview Data Source creation response: '{response}'");
+        }
+
         /// <summary>
-        /// Deketes a data source from in Purview.
+        /// Deletes a data source in Purview.
         /// </summary>
         /// <param name="resourceName">Name of the resource.</param>
         /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
