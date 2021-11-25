@@ -46,9 +46,9 @@ jobs:
 
       # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
       # If this step fails, then you should remove it and run the build manually (see below)
-      - name: CodeQL Autobuild
-        id: codeql_autobuild
-        uses: github/codeql-action/autobuild@v1
+      # - name: CodeQL Autobuild
+      #   id: codeql_autobuild
+      #   uses: github/codeql-action/autobuild@v1
 
       # ℹ️ Command-line programs to run using the OS shell.
       # 📚 https://git.io/JvXDl
@@ -57,9 +57,10 @@ jobs:
       #    and modify them (or add more) to build your code if your project
       #    uses a compiled language
 
-      #- run: |
-      #   make bootstrap
-      #   make release
+      # Build .NET project
+      - name: Build .NET project
+        id: dotnet_build
+        run: dotnet build --no-restore
 
       - name: CodeQL Analysis
         id: codeql_analysis
