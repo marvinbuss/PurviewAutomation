@@ -242,6 +242,18 @@ namespace PurviewAutomation
             log.LogInformation($"Purview Scan creation response: '{response}'");
         }
 
+        /// <summary>
+        /// Creates a Synapse workspace data source in a Purview collection.
+        /// </summary>
+        /// <param name="resourceId">Resource ID of the Storage Account.</param>
+        /// <param name="subscriptionId">Subscription ID of the Storage Account.</param>
+        /// <param name="resourceGroupName">Resource Group Name of the storage Account.</param>
+        /// <param name="resourceName">Name of the Storage Account.</param>
+        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
+        /// <param name="log">Logger object to capture logs.</param>
+        /// <remarks>
+        /// Onboards a Synapse Workspace to the resource group Purview Collection.
+        /// </remarks>
         private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
         {
             // Get synapse workspace details
