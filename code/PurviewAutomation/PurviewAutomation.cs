@@ -15,6 +15,7 @@ using Azure.Analytics.Purview.Scanning;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
+using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
 
 namespace PurviewAutomation
 {
@@ -46,7 +47,10 @@ namespace PurviewAutomation
                 log.LogError("Incorrect scope length");
                 throw new Exception("Incorrect scope length");
             }
-            var purviewAccountName = GetEnvironmentVariable(name: "PurviewAccountName");
+            var purviewResourceId = GetEnvironmentVariable(name: "PurviewResourceId");
+            var purviewManagedStorageResourceId = GetEnvironmentVariable(name: "PurviewManagedStorageResourceId");
+            var purviewManagedEventHubId = GetEnvironmentVariable(name: "PurviewManagedEventHubId");
+            var purviewAccountName = purviewResourceId.Split(separator: "/")[8];
             var purviewAccountEndpoint = $"https://{purviewAccountName}.purview.azure.com/account";
             var purviewScanEndpoint = $"https://{purviewAccountName}.purview.azure.com/scan";
             var purviewRootCollectionName = GetEnvironmentVariable(name: "PurviewRootCollectionName");
@@ -64,6 +68,15 @@ namespace PurviewAutomation
                     break;
                 case "Microsoft.Storage/storageAccounts/delete":
                     log.LogInformation("Storage Account deletion detected");
+                    DeleteDataSource(resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
+                    break;
+                case "Microsoft.Synapse/workspaces/write":
+                    log.LogInformation("Synapse workspace creation detected");
+                    PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
+                    CreateSynapseWorkspace(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewResourceId: purviewResourceId, purviewManagedStorageResourceId: purviewManagedStorageResourceId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
+                    break;
+                case "Microsoft.Synapse/workspaces/delete":
+                    log.LogInformation("Synapse workspace deletion detected");
                     DeleteDataSource(resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
                     break;
                 default:
@@ -254,7 +267,7 @@ namespace PurviewAutomation
         /// <remarks>
         /// Onboards a Synapse Workspace to the resource group Purview Collection.
         /// </remarks>
-        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
+        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId, ILogger log)
         {
             // Get synapse workspace details
             var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
@@ -290,6 +303,35 @@ namespace PurviewAutomation
             var content = RequestContent.Create(serializable: dataSourceDetails);
             var response = dataSourceClient.CreateOrUpdate(content: content);
             log.LogInformation($"Purview Data Source creation response: '{response}'");
+
+            // Create managed private endpoints client
+            endpoint = new Uri(uriString: $"https://{resourceName}.dev.azuresynapse.net/managedVirtualNetworks/default/managedPrivateEndpoints/");
+            var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: endpoint, credential: credential);
+
+            // Create managed private endpoints on managed vnet for Purview
+            var managedVirtualNetworkName = "default";
+            var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
+            {
+                new ManagedPrivateEndpointDetails{ Name = "Purview", GroupId = "account", ResourceId = purviewResourceId },
+                new ManagedPrivateEndpointDetails{ Name = "Purview_blob", GroupId = "blob", ResourceId = purviewManagedStorageResourceId },
+                new ManagedPrivateEndpointDetails{ Name = "Purview_queue", GroupId = "queue", ResourceId = purviewManagedStorageResourceId },
+                new ManagedPrivateEndpointDetails{ Name = "Purview_namespace", GroupId = "namespace", ResourceId = purviewManagedEventHubId }
+            };
+            foreach (var privateEndpointDetail in privateEndpointDetails)
+            {
+                managedPrivateEndpointsClient.Create(
+                    managedPrivateEndpointName: privateEndpointDetail.Name,
+                    managedPrivateEndpoint: new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpoint
+                    {
+                        Properties = new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpointProperties
+                        {
+                            PrivateLinkResourceId = privateEndpointDetail.ResourceId,
+                            GroupId = privateEndpointDetail.GroupId
+                        }
+                    },
+                    managedVirtualNetworkName: managedVirtualNetworkName
+                );
+            }
         }
 
         /// <summary>
@@ -319,5 +361,15 @@ namespace PurviewAutomation
         {
             return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
         }
+    }
+
+    /// <summary>
+    /// Record for specifying managed private endpoint details.
+    /// </summary>
+    public record ManagedPrivateEndpointDetails
+    {
+        public string Name { get; init; }
+        public string ResourceId { get; init; }
+        public string GroupId { get; init; }
     }
 }
