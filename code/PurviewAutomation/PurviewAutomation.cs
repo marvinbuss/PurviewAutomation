@@ -16,6 +16,9 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
+using Microsoft.Data.SqlClient;
+using System.Threading.Tasks;
+using System.Data.Common;
 
 namespace PurviewAutomation
 {
@@ -73,7 +76,7 @@ namespace PurviewAutomation
                 case "Microsoft.Synapse/workspaces/write":
                     log.LogInformation("Synapse workspace creation detected");
                     PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    CreateSynapseWorkspace(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewResourceId: purviewResourceId, purviewManagedStorageResourceId: purviewManagedStorageResourceId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
+                    CreateSynapseWorkspaceAsync(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewResourceId: purviewResourceId, purviewManagedStorageResourceId: purviewManagedStorageResourceId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
                     break;
                 case "Microsoft.Synapse/workspaces/delete":
                     log.LogInformation("Synapse workspace deletion detected");
@@ -267,7 +270,7 @@ namespace PurviewAutomation
         /// <remarks>
         /// Onboards a Synapse Workspace to the resource group Purview Collection.
         /// </remarks>
-        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId, ILogger log)
+        private static async Task CreateSynapseWorkspaceAsync(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewName, string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId, ILogger log)
         {
             // Get synapse workspace details
             var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
@@ -331,6 +334,20 @@ namespace PurviewAutomation
                     },
                     managedVirtualNetworkName: managedVirtualNetworkName
                 );
+            }
+
+            // Add the Purview account MSI on the serverless SQL databases
+            try
+            {
+                using var connection = new SqlConnection(connectionString: $"Server=tcp:{resourceName}-ondemand.sql.azuresynapse.net,1433;Initial Catalog=master;Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Default\";");
+                await connection.OpenAsync();
+
+                using var sqlCommand = new SqlCommand(cmdText: $"CREATE LOGIN [{purviewName}] FROM EXTERNAL PROVIDER;", connection: connection);
+                await sqlCommand.ExecuteNonQueryAsync();
+            }
+            catch (Exception ex)
+            {
+                log.LogError(exception: ex, message: "Failed to add Purview MSI to SQL serverless databases");
             }
         }
 
