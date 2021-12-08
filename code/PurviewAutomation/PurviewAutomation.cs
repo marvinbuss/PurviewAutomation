@@ -364,9 +364,9 @@ namespace PurviewAutomation
     }
 
     /// <summary>
-    /// Record for specifying managed private endpoint details.
+    /// Record struct for specifying managed private endpoint details.
     /// </summary>
-    public record struct ManagedPrivateEndpointDetails
+    internal record struct ManagedPrivateEndpointDetails
     {
         public string Name { get; init; }
         public string ResourceId { get; init; }
