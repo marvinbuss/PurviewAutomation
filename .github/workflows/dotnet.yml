@@ -8,7 +8,7 @@ on:
 
 env:
   DOTNET_VERSION: "6.0.x"
-  WORKING_DIRECTORY: "."
+  WORKING_DIRECTORY: "code/"
 
 jobs:
   build:
@@ -33,13 +33,16 @@ jobs:
       - name: Restore .NET dependencies
         id: dotnet_restore
         run: dotnet restore
+        working-directory: ${{ env.WORKING_DIRECTORY }}
 
       # Build .NET project
       - name: Build .NET project
         id: dotnet_build
         run: dotnet build --no-restore
+        working-directory: ${{ env.WORKING_DIRECTORY }}
 
       # Test .NET project
       - name: Test .NET project
         id: dotnet_test
         run: dotnet test --no-build --verbosity normal
+        working-directory: ${{ env.WORKING_DIRECTORY }}
