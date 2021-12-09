@@ -5,7 +5,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Analytics.Purview.Account" Version="1.0.0-beta.1" />
+    <PackageReference Include="Azure.Analytics.Purview.Administration" Version="1.0.0-beta.1" />
     <PackageReference Include="Azure.Analytics.Purview.Scanning" Version="1.0.0-beta.2" />
+    <PackageReference Include="Azure.Analytics.Synapse.AccessControl" Version="1.0.0-preview.5" />
     <PackageReference Include="Azure.Analytics.Synapse.ManagedPrivateEndpoints" Version="1.0.0-beta.5" />
     <PackageReference Include="Azure.Identity" Version="1.5.0" />
     <PackageReference Include="Azure.ResourceManager.Resources" Version="1.0.0-beta.4" />
