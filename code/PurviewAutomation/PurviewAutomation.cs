@@ -357,8 +357,8 @@ namespace PurviewAutomation
 
             // Create Purview role assignment for Lineage
             var purviewRootCollectionMetadataPolicyId = GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId");
-            var principalId = synapse.Data.Identity.SystemAssignedIdentity.PrincipalId;
-            CreatePurviewRoleAssignment(purviewAccountName: purviewAccountName, purviewRootCollectionName: purviewAccountName, purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId, principalId: principalId);
+            var pincipalId = synapse.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString();
+            CreatePurviewRoleAssignment(purviewAccountName: purviewAccountName, purviewRootCollectionName: purviewAccountName, purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId, pincipalId: pincipalId);
 
             // Add the Purview account MSI on the serverless SQL databases - blocked because of https://github.com/MicrosoftDocs/sql-docs/issues/2323
             //try
