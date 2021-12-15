@@ -10,7 +10,6 @@ using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Messaging.EventGrid;
-using Azure.Analytics.Purview.Account;
 using Azure.Analytics.Purview.Scanning;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
@@ -21,6 +20,10 @@ using Microsoft.Data.SqlClient;
 using System.Data.Common;
 using System.Text.Json;
 using Azure.Analytics.Purview.Administration;
+
+using PurviewAutomation.Models;
+using System.IO;
+using Azure;
 
 namespace PurviewAutomation
 {
@@ -353,7 +356,9 @@ namespace PurviewAutomation
             }
 
             // Create Purview role assignment for Lineage
-            // TODO
+            var purviewRootCollectionMetadataPolicyId = GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId");
+            var principalId = synapse.Data.Identity.SystemAssignedIdentity.PrincipalId;
+            CreatePurviewRoleAssignment(purviewAccountName: purviewAccountName, purviewRootCollectionName: purviewAccountName, purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId, principalId: principalId);
 
             // Add the Purview account MSI on the serverless SQL databases - blocked because of https://github.com/MicrosoftDocs/sql-docs/issues/2323
             //try
@@ -388,20 +393,42 @@ namespace PurviewAutomation
             log.LogInformation($"Purview Data Source deletion response: '{response}'");
         }
 
-        private static void CreatePurviewRoleAssignment(string purviewAccountName, string purviewRootCollectionName)
+        private static void CreatePurviewRoleAssignment(string purviewAccountName, string purviewRootCollectionName, string purviewRootCollectionMetadataPolicyId, string pincipalId)
         {
-            throw new NotImplementedException();
-
             // Create Purview role client
             var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
             var endpoint = new Uri(uriString: $"https://{purviewAccountName}.purview.azure.com");
             var client = new PurviewMetadataPolicyClient(endpoint: endpoint, collectionName: purviewRootCollectionName, credential: credential);
 
+            // Get Purview Metadata Policy
+            var metadataPolicy = client.GetMetadataPolicy(policyId: purviewRootCollectionMetadataPolicyId, options: new());
+
+            // Convert metadata policy to object
+            JsonElement metadataPolicyJson = JsonDocument.Parse(GetContentFromResponse(metadataPolicy)).RootElement;
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var metadataPolicyObject = JsonSerializer.Deserialize<PurviewMetadataPolicy>(element: metadataPolicyJson, options: options);
+
+            // Add principal Id
+            foreach (var attributerule in metadataPolicyObject.Properties.AttributeRules)
+            {
+                if (attributerule.Id.StartsWith("purviewmetadatarole_builtin_data-curator:")) // TOD Support different roles
+                {
+                    foreach (var dnfCondition in attributerule.DnfCondition[0])
+                    {
+                        if (dnfCondition.AttributeName.Equals("principal.microsoft.id"))
+                        {
+                            dnfCondition.AttributeValueIncludedIn?.Add(pincipalId);
+                        }
+                    }
+                }
+            }
+
             // Create role assignment
-            client.UpdateMetadataPolicy()
-            var policies = client.GetMetadataPolicies();
-            policies.
-            client.UpdateMetadataPolicy(policyId: "", content: content);
+            var content = RequestContent.Create(metadataPolicyObject);
+            var myResponse = client.UpdateMetadataPolicy(policyId: purviewRootCollectionMetadataPolicyId, content: content);
         }
 
         /// <summary>
@@ -413,15 +440,15 @@ namespace PurviewAutomation
         {
             return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
         }
-    }
 
-    /// <summary>
-    /// Record struct for specifying managed private endpoint details.
-    /// </summary>
-    internal record struct ManagedPrivateEndpointDetails
-    {
-        public string Name { get; init; }
-        public string ResourceId { get; init; }
-        public string GroupId { get; init; }
+        private static BinaryData GetContentFromResponse(Response r)
+        {
+            // Workaround azure/azure-sdk-for-net#21048, which prevents .Content from working when dealing with responses
+            // from the playback system.
+
+            MemoryStream ms = new MemoryStream();
+            r.ContentStream.CopyTo(ms);
+            return new BinaryData(ms.ToArray());
+        }
     }
 }
