@@ -6,7 +6,7 @@ targetScope = 'resourceGroup'
 // Parameters
 param tags object
 param eventGridTopicName string
-param eventGridTopicSource string
+param eventGridTopicSourceSubscriptionId string
 param eventGridTopicDeadLetterStorageAccountId string
 param eventGridTopicDeadLetterStorageAccountContainerName string
 param functionId string
@@ -22,7 +22,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
     type: 'SystemAssigned'
   }
   properties: {
-    source: eventGridTopicSource
+    source: '/subscriptions/${eventGridTopicSourceSubscriptionId}'
     topicType: 'Microsoft.Resources.Subscriptions'
   }
 }
@@ -43,7 +43,7 @@ resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubsc
     destination: {
       endpointType: 'AzureFunction'
       properties: {
-        resourceId: functionId
+        resourceId: '${functionId}/functions/PurviewAutomation'
         maxEventsPerBatch: 1
         preferredBatchSizeInKilobytes: 64
       }

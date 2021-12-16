@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-targetScope = 'subscription'
+targetScope = 'resourceGroup'
 
 // Parameters
 @description('Specifies the location for all resources.')
@@ -27,6 +27,11 @@ param purviewId string
 param purviewManagedStorageId string
 @description('Specifies the resource ID of the managed event hub of the central purview instance.')
 param purviewManagedEventHubId string
+@description('Specifies the name of the purview root collection.')
+param purviewRootCollectionName string
+@description('Specifies the id of the purview root collection metadata policy.')
+param purviewRootCollectionMetadataPolicyId string
+param eventGridTopicSourceSubscriptionIds array
 
 // Network parameters
 @description('Specifies the resource ID of the subnet to which all services will connect.')
@@ -39,6 +44,8 @@ param functionSubnetId string
 param privateDnsZoneIdBlob string = ''
 @description('Specifies the resource ID of the private DNS zone for File Storage.')
 param privateDnsZoneIdFile string = ''
+@description('Specifies the resource ID of the private DNS zone for KeyVault.')
+param privateDnsZoneIdKeyVault string = ''
 
 // Variables
 var name = toLower('${prefix}-${environment}')
@@ -52,6 +59,9 @@ var tagsDefault = {
 var tagsJoined = union(tagsDefault, tags)
 var storage001Name = '${name}-storage001'
 var applicationInsights001Name = '${name}-insights001'
+var keyvault001Name = '${name}-vault001'
+var function001Name = '${name}-function001'
+var eventGridTopicDeadLetterStorageAccountContainerName = 'deadletters'
 
 // Resources
 module storage001 'modules/services/storage.bicep' = {
@@ -63,7 +73,7 @@ module storage001 'modules/services/storage.bicep' = {
     subnetId: subnetId
     storageName: storage001Name
     storageContainerNames: [
-      'default'
+      eventGridTopicDeadLetterStorageAccountContainerName
     ]
     storageSkuName: 'Standard_LRS'
     privateDnsZoneIdBlob: privateDnsZoneIdBlob
@@ -78,7 +88,64 @@ module applicationInsights001 'modules/services/applicationinsights.bicep' = {
     location: location
     tags: tagsJoined
     applicationInsightsName: applicationInsights001Name
-    logAnalyticsWorkspaceId: ''
   }
 }
 
+module keyVault001 'modules/services/keyvault.bicep' = {
+  name: 'keyVault001'
+  scope: resourceGroup()
+  params: {
+    location: location
+    tags: tagsJoined
+    subnetId: subnetId
+    keyvaultName: keyvault001Name
+    privateDnsZoneIdKeyVault: privateDnsZoneIdKeyVault
+    applicationInsightsId: applicationInsights001.outputs.applicationInsightsId
+    storageId: storage001.outputs.storageId
+  }
+}
+
+module function001 'modules/services/function.bicep' = {
+  name: 'function001'
+  scope: resourceGroup()
+  params: {
+    location: location
+    tags: tags
+    functionName: function001Name
+    functionSubnetId: functionSubnetId
+    purviewId: purviewId
+    purviewManagedEventHubId: purviewManagedEventHubId
+    purviewManagedStorageId: purviewManagedStorageId
+    purviewRootCollectionName: purviewRootCollectionName
+    purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
+    storageConnectionStringSecretUri: keyVault001.outputs.storageConnectionStringSecretUri
+    applicationInsightsInstrumentationKeySecretUri: keyVault001.outputs.applicationInsightsInstrumentationKeySecretUri
+    applicationInsightsConnectionStringSecretUri: keyVault001.outputs.applicationInsightsConnectionStringSecretUri
+  }
+}
+
+module roleAssignmentFunctionKeyVault 'modules/auxiliary/keyVaultRoleAssignment.bicep' = {
+  name: 'roleAssignmentFunctionKeyVault'
+  scope: resourceGroup()
+  params: {
+    keyVaultId: keyVault001.outputs.keyvaultId
+    functionId: function001.outputs.functionId
+  }
+}
+
+module eventGridTopic 'modules/services/eventgridsystemtopic.bicep' = [for (eventGridTopicSourceSubscriptionId, index) in eventGridTopicSourceSubscriptionIds: {
+  name: 'eventGridTopic${padLeft(index, 3, '0')}'
+  scope: resourceGroup()
+  params: {
+    tags: tags
+    eventGridTopicName: '${name}-eventGrid${padLeft(index, 3, '0')}'
+    eventGridTopicSourceSubscriptionId: eventGridTopicSourceSubscriptionId
+    eventGridTopicDeadLetterStorageAccountId: storage001.outputs.storageId
+    eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
+    functionId: function001.outputs.functionId
+  }
+}]
+
+// Outputs
+output function001Name string = function001.outputs.functionName
+output function001PrincipalId string = function001.outputs.functionPrincipalId

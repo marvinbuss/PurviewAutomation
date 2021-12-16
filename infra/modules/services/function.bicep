@@ -12,6 +12,10 @@ param applicationInsightsConnectionStringSecretUri string
 param storageConnectionStringSecretUri string
 param functionSubnetId string
 param purviewId string
+param purviewManagedStorageId string
+param purviewManagedEventHubId string
+param purviewRootCollectionName string
+param purviewRootCollectionMetadataPolicyId string
 
 // Variables
 var appServicePlanName = '${functionName}-asp001'
@@ -50,8 +54,20 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
   kind: 'functionapp'
   properties: {
     clientAffinityEnabled: false
+    clientCertEnabled: false
+    clientCertMode: 'Required'
     enabled: true
+    hostNamesDisabled: false
     httpsOnly: true
+    hyperV: false
+    isXenon: false
+    keyVaultReferenceIdentity: 'SystemAssigned'
+    reserved: false
+    redundancyMode: 'None'
+    scmSiteAlsoStopped: false
+    serverFarmId: appServicePlan.id
+    storageAccountRequired: false
+    virtualNetworkSubnetId: functionSubnetId
     siteConfig: {
       appSettings: [
         {
@@ -61,6 +77,18 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
         {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'dotnet'
+        }
+        {
+          name: 'WEBSITE_CONTENTAZUREFILECONNECTIONSTRING'
+          value: '@Microsoft.KeyVault(SecretUri=${storageConnectionStringSecretUri})'
+        }
+        {
+          name: 'WEBSITE_CONTENTSHARE'
+          value: 'TODO'  // TODO
+        }
+        {
+          name: 'WEBSITE_RUN_FROM_PACKAGE'
+          value: '1'
         }
         {
           name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
@@ -90,21 +118,43 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
           name: 'FunctionPrincipalId'
           value: 'TODO'  // TODO
         }
+        {
+          name: 'PurviewResourceId'
+          value: purviewId
+        }
+        {
+          name: 'PurviewManagedStorageId'
+          value: purviewManagedStorageId
+        }
+        {
+          name: 'PurviewManagedEventHubId'
+          value: purviewManagedEventHubId
+        }
+        {
+          name: 'PurviewRootCollectionName'
+          value: purviewRootCollectionName
+        }
+        {
+          name: 'PurviewRootCollectionMetadataPolicyId'
+          value: purviewRootCollectionMetadataPolicyId
+        }
       ]
       cors: {
         allowedOrigins: [
           'https://portal.azure.com'
         ]
       }
-      alwaysOn: true
+      acrUseManagedIdentityCreds: false
+      alwaysOn: false
+      functionAppScaleLimit: 200
+      http20Enabled: false
       minTlsVersion: '1.2'
-      // http20Enabled: true
+      minimumElasticInstanceCount: 1
       netFrameworkVersion: 'v6.0'
+      numberOfWorkers: 1
       use32BitWorkerProcess: true
       vnetRouteAllEnabled: true
     }
-    serverFarmId: appServicePlan.id
-    virtualNetworkSubnetId: functionSubnetId
   }
 }
 
@@ -117,3 +167,6 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
 }
 
 // Outputs
+output functionName string = function.name
+output functionPrincipalId string = function.identity.principalId
+output functionId string = function.id
