@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace PurviewAutomation.Models;
+﻿namespace PurviewAutomation.Models;
 
 /// <summary>
 /// Record struct for specifying managed private endpoint details.

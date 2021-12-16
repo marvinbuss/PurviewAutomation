@@ -1,29 +1,11 @@
-﻿using System;
+﻿using System.Collections.Generic;
 
 namespace PurviewAutomation.Models;
 
-internal class PurviewClient
+internal class AttributeRules
 {
-    private readonly string purviewName;
-    private readonly string purviewResourceId;
-    private readonly string purviewManagedStorageResourceId;
-    private readonly string purviewManagedEventHubId;
-    private readonly string purviewAccountEndpoint;
-    private readonly string purviewScanEndpoint;
-
-    internal PurviewClient(string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId)
-    {
-        if (purviewResourceId.Split(separator: "/").Length != 9 || 
-            purviewManagedStorageResourceId.Split(separator: "/").Length != 9 || 
-            purviewManagedEventHubId.Split(separator: "/").Length != 9)
-        {
-            throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: "purviewResourceId");
-        }
-        this.purviewName = purviewResourceId.Split(separator: "/")[8];
-        this.purviewResourceId = purviewResourceId;
-        this.purviewManagedStorageResourceId = purviewManagedStorageResourceId;
-        this.purviewManagedEventHubId = purviewManagedEventHubId;
-        this.purviewAccountEndpoint = $"https://{this.purviewName}.purview.azure.com/account";
-        this.purviewScanEndpoint = $"https://{this.purviewName}.purview.azure.com/scan";
-    }
+    public string Kind { get; set; }
+    public string Id { get; set; }
+    public string Name { get; set; }
+    public List<List<Rule>> DnfCondition { get; set; }
 }
