@@ -10,12 +10,20 @@ using Microsoft.Azure.WebJobs.Extensions.EventGrid;
 using Azure.Core;
 using Azure.Identity;
 using Azure.Messaging.EventGrid;
-using Azure.Analytics.Purview.Account;
 using Azure.Analytics.Purview.Scanning;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Azure.ResourceManager.Storage;
 using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
+using Azure.Analytics.Synapse.AccessControl;
+using Microsoft.Data.SqlClient;
+using System.Data.Common;
+using System.Text.Json;
+using Azure.Analytics.Purview.Administration;
+
+using PurviewAutomation.Models;
+using System.IO;
+using Azure;
 
 namespace PurviewAutomation
 {
@@ -73,7 +81,7 @@ namespace PurviewAutomation
                 case "Microsoft.Synapse/workspaces/write":
                     log.LogInformation("Synapse workspace creation detected");
                     PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    CreateSynapseWorkspace(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewResourceId: purviewResourceId, purviewManagedStorageResourceId: purviewManagedStorageResourceId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
+                    CreateSynapseWorkspaceAsync(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewAccountName: purviewAccountName, purviewResourceId: purviewResourceId, purviewManagedStorageResourceId: purviewManagedStorageResourceId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
                     break;
                 case "Microsoft.Synapse/workspaces/delete":
                     log.LogInformation("Synapse workspace deletion detected");
@@ -267,7 +275,7 @@ namespace PurviewAutomation
         /// <remarks>
         /// Onboards a Synapse Workspace to the resource group Purview Collection.
         /// </remarks>
-        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId, ILogger log)
+        private static void CreateSynapseWorkspaceAsync(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewAccountName, string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId, ILogger log)
         {
             // Get synapse workspace details
             var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
@@ -304,12 +312,19 @@ namespace PurviewAutomation
             var response = dataSourceClient.CreateOrUpdate(content: content);
             log.LogInformation($"Purview Data Source creation response: '{response}'");
 
-            // Create managed private endpoints client
-            endpoint = new Uri(uriString: $"https://{resourceName}.dev.azuresynapse.net/managedVirtualNetworks/default/managedPrivateEndpoints/");
+            // Create Synapse role assigment client
+            endpoint = new Uri(uriString: $"https://{resourceName}.dev.azuresynapse.net");
+
+            // Create Synapse role assignment
+            var functionPrincipalId = GetEnvironmentVariable(name: "FunctionPrincipalId");
+            var roleAssignmentsClient = new RoleAssignmentsClient(endpoint: endpoint, credential: credential);
+            var roleAssignmentResponse = roleAssignmentsClient.CreateRoleAssignment(roleAssignmentId: functionPrincipalId, roleId: new Guid("dd665582-e433-40ca-b183-1b1b33e73375"), principalId: new Guid(functionPrincipalId), scope: $"workspaces/{resourceName}");
+            log.LogInformation($"Purview role assigment response: '{roleAssignmentResponse}'");
+
+            // Create Synapse managed private endpoints client
             var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: endpoint, credential: credential);
 
             // Create managed private endpoints on managed vnet for Purview
-            var managedVirtualNetworkName = "default";
             var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
             {
                 new ManagedPrivateEndpointDetails{ Name = "Purview", GroupId = "account", ResourceId = purviewResourceId },
@@ -319,19 +334,45 @@ namespace PurviewAutomation
             };
             foreach (var privateEndpointDetail in privateEndpointDetails)
             {
-                managedPrivateEndpointsClient.Create(
-                    managedPrivateEndpointName: privateEndpointDetail.Name,
-                    managedPrivateEndpoint: new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpoint
-                    {
-                        Properties = new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpointProperties
+                try
+                {
+                    managedPrivateEndpointsClient.Create(
+                        managedPrivateEndpointName: privateEndpointDetail.Name,
+                        managedPrivateEndpoint: new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpoint
                         {
-                            PrivateLinkResourceId = privateEndpointDetail.ResourceId,
-                            GroupId = privateEndpointDetail.GroupId
-                        }
-                    },
-                    managedVirtualNetworkName: managedVirtualNetworkName
-                );
+                            Properties = new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpointProperties
+                            {
+                                PrivateLinkResourceId = privateEndpointDetail.ResourceId,
+                                GroupId = privateEndpointDetail.GroupId
+                            }
+                        },
+                        managedVirtualNetworkName: "default"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    log.LogError(exception: ex, message: $"Private endpoint creation failed: {privateEndpointDetail}");
+                }
             }
+
+            // Create Purview role assignment for Lineage
+            var purviewRootCollectionMetadataPolicyId = GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId");
+            var pincipalId = synapse.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString();
+            CreatePurviewRoleAssignment(purviewAccountName: purviewAccountName, purviewRootCollectionName: purviewAccountName, purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId, pincipalId: pincipalId);
+
+            // Add the Purview account MSI on the serverless SQL databases - blocked because of https://github.com/MicrosoftDocs/sql-docs/issues/2323
+            //try
+            //{
+            //    using var connection = new SqlConnection(connectionString: $"Server=tcp:{resourceName}-ondemand.sql.azuresynapse.net,1433;Initial Catalog=master;Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Default\";");
+            //    connection.Open();
+
+            //    using var sqlCommand = new SqlCommand(cmdText: $"CREATE LOGIN [{purviewAccountName}] FROM EXTERNAL PROVIDER;", connection: connection);
+            //    sqlCommand.ExecuteNonQuery();
+            //}
+            //catch (Exception ex)
+            //{
+            //    log.LogError(exception: ex, message: "Failed to add Purview MSI to SQL serverless databases");
+            //}
         }
 
         /// <summary>
@@ -352,6 +393,44 @@ namespace PurviewAutomation
             log.LogInformation($"Purview Data Source deletion response: '{response}'");
         }
 
+        private static void CreatePurviewRoleAssignment(string purviewAccountName, string purviewRootCollectionName, string purviewRootCollectionMetadataPolicyId, string pincipalId)
+        {
+            // Create Purview role client
+            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
+            var endpoint = new Uri(uriString: $"https://{purviewAccountName}.purview.azure.com");
+            var client = new PurviewMetadataPolicyClient(endpoint: endpoint, collectionName: purviewRootCollectionName, credential: credential);
+
+            // Get Purview Metadata Policy
+            var metadataPolicy = client.GetMetadataPolicy(policyId: purviewRootCollectionMetadataPolicyId, options: new());
+
+            // Convert metadata policy to object
+            JsonElement metadataPolicyJson = JsonDocument.Parse(GetContentFromResponse(metadataPolicy)).RootElement;
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+            var metadataPolicyObject = JsonSerializer.Deserialize<PurviewMetadataPolicy>(element: metadataPolicyJson, options: options);
+
+            // Add principal Id
+            foreach (var attributerule in metadataPolicyObject.Properties.AttributeRules)
+            {
+                if (attributerule.Id.StartsWith("purviewmetadatarole_builtin_data-curator:")) // TOD Support different roles
+                {
+                    foreach (var dnfCondition in attributerule.DnfCondition[0])
+                    {
+                        if (dnfCondition.AttributeName.Equals("principal.microsoft.id"))
+                        {
+                            dnfCondition.AttributeValueIncludedIn?.Add(pincipalId);
+                        }
+                    }
+                }
+            }
+
+            // Create role assignment
+            var content = RequestContent.Create(metadataPolicyObject);
+            var myResponse = client.UpdateMetadataPolicy(policyId: purviewRootCollectionMetadataPolicyId, content: content);
+        }
+
         /// <summary>
         /// Returns an environment variable as string.
         /// </summary>
@@ -361,15 +440,15 @@ namespace PurviewAutomation
         {
             return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
         }
-    }
 
-    /// <summary>
-    /// Record struct for specifying managed private endpoint details.
-    /// </summary>
-    internal record struct ManagedPrivateEndpointDetails
-    {
-        public string Name { get; init; }
-        public string ResourceId { get; init; }
-        public string GroupId { get; init; }
+        private static BinaryData GetContentFromResponse(Response r)
+        {
+            // Workaround azure/azure-sdk-for-net#21048, which prevents .Content from working when dealing with responses
+            // from the playback system.
+
+            MemoryStream ms = new MemoryStream();
+            r.ContentStream.CopyTo(ms);
+            return new BinaryData(ms.ToArray());
+        }
     }
 }
