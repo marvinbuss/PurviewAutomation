@@ -31,7 +31,10 @@ param purviewManagedEventHubId string
 param purviewRootCollectionName string
 @description('Specifies the id of the purview root collection metadata policy.')
 param purviewRootCollectionMetadataPolicyId string
+@description('Specifies the subscription ids for which event grid topics should be created.')
 param eventGridTopicSourceSubscriptionIds array
+@description('Specifies whether the event subscription from the event grid topic to the function should be created.')
+param createEventSubscription bool
 
 // Network parameters
 @description('Specifies the resource ID of the subnet to which all services will connect.')
@@ -61,6 +64,7 @@ var storage001Name = '${name}-storage001'
 var applicationInsights001Name = '${name}-insights001'
 var keyvault001Name = '${name}-vault001'
 var function001Name = '${name}-function001'
+var function001FileShareName = function001Name
 var eventGridTopicDeadLetterStorageAccountContainerName = 'deadletters'
 
 // Resources
@@ -74,6 +78,9 @@ module storage001 'modules/services/storage.bicep' = {
     storageName: storage001Name
     storageContainerNames: [
       eventGridTopicDeadLetterStorageAccountContainerName
+    ]
+    storageFileShareNames: [
+      function001FileShareName
     ]
     storageSkuName: 'Standard_LRS'
     privateDnsZoneIdBlob: privateDnsZoneIdBlob
@@ -113,11 +120,23 @@ module function001 'modules/services/function.bicep' = {
     tags: tags
     functionName: function001Name
     functionSubnetId: functionSubnetId
+  }
+}
+
+module function001AppSettings 'modules/services/functionAppSettings.bicep' = {
+  name: 'function001AppSettings'
+  scope: resourceGroup()
+  dependsOn: [
+    roleAssignmentFunctionKeyVault
+  ]
+  params: {
+    functionId: function001.outputs.functionId
     purviewId: purviewId
     purviewManagedEventHubId: purviewManagedEventHubId
     purviewManagedStorageId: purviewManagedStorageId
     purviewRootCollectionName: purviewRootCollectionName
     purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
+    functionFileShareName: function001FileShareName
     storageConnectionStringSecretUri: keyVault001.outputs.storageConnectionStringSecretUri
     applicationInsightsInstrumentationKeySecretUri: keyVault001.outputs.applicationInsightsInstrumentationKeySecretUri
     applicationInsightsConnectionStringSecretUri: keyVault001.outputs.applicationInsightsConnectionStringSecretUri
@@ -133,18 +152,37 @@ module roleAssignmentFunctionKeyVault 'modules/auxiliary/keyVaultRoleAssignment.
   }
 }
 
-module eventGridTopic 'modules/services/eventgridsystemtopic.bicep' = [for (eventGridTopicSourceSubscriptionId, index) in eventGridTopicSourceSubscriptionIds: {
+module eventGridTopic 'modules/services/eventgridtopic.bicep' = [for (eventGridTopicSourceSubscriptionId, index) in eventGridTopicSourceSubscriptionIds: {
   name: 'eventGridTopic${padLeft(index, 3, '0')}'
   scope: resourceGroup()
   params: {
     tags: tags
-    eventGridTopicName: '${name}-eventGrid${padLeft(index, 3, '0')}'
+    eventGridTopicName: '${name}-eventGrid${padLeft(index + 1, 3, '0')}'
     eventGridTopicSourceSubscriptionId: eventGridTopicSourceSubscriptionId
     eventGridTopicDeadLetterStorageAccountId: storage001.outputs.storageId
     eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
     functionId: function001.outputs.functionId
+    createEventSubscription: createEventSubscription
   }
 }]
+
+module functionSubscriptionRoleAssignmentContributor 'modules/auxiliary/functionRoleAssignmentSubscription.bicep' = {
+  name: 'functionSubscriptionRoleAssignmentContributor'
+  scope: subscription()
+  params: {
+    role: 'Contributor'
+    functionId: function001.outputs.functionId
+  }
+}
+
+module functionSubscriptionRoleAssignmentUserAccessAdministrator 'modules/auxiliary/functionRoleAssignmentSubscription.bicep' = {
+  name: 'functionSubscriptionRoleAssignmentUserAccessAdministrator'
+  scope: subscription()
+  params: {
+    role: 'UserAccessAdministrator'
+    functionId: function001.outputs.functionId
+  }
+}
 
 // Outputs
 output function001Name string = function001.outputs.functionName

@@ -63,7 +63,7 @@ resource applicationInsightsConnectionString 'Microsoft.KeyVault/vaults/secrets@
   name: 'applicationInsightsConnectionString'
   properties: {
     contentType: 'text/plain'
-    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listKeys(storageId, '2021-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+    value: reference(applicationInsightsId, '2020-02-02').ConnectionString
     attributes: {
       enabled: true
     }
@@ -75,7 +75,7 @@ resource storageConnectionString 'Microsoft.KeyVault/vaults/secrets@2019-09-01' 
   name: 'storageConnectionString'
   properties: {
     contentType: 'text/plain'
-    value: reference(applicationInsightsId, '2020-02-02').ConnectionString
+    value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${listKeys(storageId, '2021-06-01').keys[0].value};EndpointSuffix=core.windows.net'
     attributes: {
       enabled: true
     }

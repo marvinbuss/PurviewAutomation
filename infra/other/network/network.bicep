@@ -9,7 +9,8 @@ param prefix string
 param tags object
 param vnetAddressPrefix string = '10.0.0.0/16'
 param servicesSubnetAddressPrefix string = '10.0.0.0/28'
-param databricksIntegrationPublicSubnetAddressPrefix string = '10.0.0.16/28'
+param functionSubnetAddressPrefix string = '10.0.0.16/28'
+param dnsServers array
 
 // Variables
 var servicesSubnetName = 'ServicesSubnet'
@@ -47,6 +48,9 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
         vnetAddressPrefix
       ]
     }
+    dhcpOptions: {
+      dnsServers: dnsServers
+    }
     enableDdosProtection: false
     subnets: [
       {
@@ -70,7 +74,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
       {
         name: functionSubnetName
         properties: {
-          addressPrefix: databricksIntegrationPublicSubnetAddressPrefix
+          addressPrefix: functionSubnetAddressPrefix
           addressPrefixes: []
           networkSecurityGroup: {
             id: nsg.id

@@ -19,16 +19,17 @@ param storageName string
   'Premium_ZRS'
 ])
 param storageSkuName string = 'Standard_LRS'
-param storageContainerNames array = [
-  'default'
-]
+param storageContainerNames array = []
+param storageFileShareNames array = []
 param privateDnsZoneIdBlob string = ''
 param privateDnsZoneIdFile string = ''
+param privateDnsZoneIdTable string = ''
 
 // Variables
 var storageNameCleaned = replace(storageName, '-', '')
 var storagePrivateEndpointNameBlob = '${storage.name}-blob-private-endpoint'
 var storagePrivateEndpointNameFile = '${storage.name}-file-private-endpoint'
+var storagePrivateEndpointNameTable = '${storage.name}-table-private-endpoint'
 
 // Resources
 resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
@@ -91,7 +92,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-resource storageManagementPolicies 'Microsoft.Storage/storageAccounts/managementPolicies@2021-02-01' = {
+resource storageManagementPolicies 'Microsoft.Storage/storageAccounts/managementPolicies@2021-06-01' = {
   parent: storage
   name: 'default'
   properties: {
@@ -154,7 +155,7 @@ resource storageManagementPolicies 'Microsoft.Storage/storageAccounts/management
   }
 }
 
-resource storageBlobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-02-01' = {
+resource storageBlobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-06-01' = {
   parent: storage
   name: 'default'
   properties: {
@@ -191,12 +192,37 @@ resource storageBlobServices 'Microsoft.Storage/storageAccounts/blobServices@202
   }
 }
 
-resource storageContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-02-01' = [for storageContainerName in storageContainerNames: {
+resource storageContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = [for storageContainerName in storageContainerNames: {
   parent: storageBlobServices
   name: storageContainerName
   properties: {
     publicAccess: 'None'
     metadata: {}
+  }
+}]
+
+resource storageFileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-06-01' = {
+  parent: storage
+  name: 'default'
+  properties: {
+    cors: {
+      corsRules: []
+    }
+    shareDeleteRetentionPolicy: {
+      enabled: true
+      days: 7
+    }
+  }
+}
+
+resource storageFileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-06-01' =  [for storageFileShareName in storageFileShareNames: {
+  parent: storageFileServices
+  name: storageFileShareName
+  properties: {
+    accessTier: 'Hot'
+    enabledProtocols: 'SMB'
+    metadata: {}
+    shareQuota: 5120
   }
 }]
 
@@ -272,6 +298,45 @@ resource storagePrivateEndpointFileARecord 'Microsoft.Network/privateEndpoints/p
         name: '${storagePrivateEndpointFile.name}-arecord'
         properties: {
           privateDnsZoneId: privateDnsZoneIdFile
+        }
+      }
+    ]
+  }
+}
+
+resource storagePrivateEndpointTable 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+  name: storagePrivateEndpointNameTable
+  location: location
+  tags: tags
+  properties: {
+    manualPrivateLinkServiceConnections: []
+    privateLinkServiceConnections: [
+      {
+        name: storagePrivateEndpointNameTable
+        properties: {
+          groupIds: [
+            'table'
+          ]
+          privateLinkServiceId: storage.id
+          requestMessage: ''
+        }
+      }
+    ]
+    subnet: {
+      id: subnetId
+    }
+  }
+}
+
+resource storagePrivateEndpointTableARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = if (!empty(privateDnsZoneIdTable)) {
+  parent: storagePrivateEndpointTable
+  name: 'default'
+  properties: {
+    privateDnsZoneConfigs: [
+      {
+        name: '${storagePrivateEndpointTable.name}-arecord'
+        properties: {
+          privateDnsZoneId: privateDnsZoneIdTable
         }
       }
     ]

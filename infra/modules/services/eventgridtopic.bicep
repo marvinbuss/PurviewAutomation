@@ -10,6 +10,7 @@ param eventGridTopicSourceSubscriptionId string
 param eventGridTopicDeadLetterStorageAccountId string
 param eventGridTopicDeadLetterStorageAccountContainerName string
 param functionId string
+param createEventSubscription bool
 
 // Variables
 
@@ -27,7 +28,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
   }
 }
 
-resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = {
+resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = if(createEventSubscription) {
   parent: eventGridTopic
   name: 'service-creation'
   properties: {
