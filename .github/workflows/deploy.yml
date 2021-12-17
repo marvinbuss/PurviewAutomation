@@ -1,0 +1,210 @@
+name: Test & Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "code/**"
+      - "infra/**"
+      - ".github/workflows/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "code/**"
+      - "infra/**"
+      - ".github/workflows/**"
+
+env:
+  DOTNET_VERSION: "6.0.x"
+  WORKING_DIRECTORY: "code/"
+  AZURE_SUBSCRIPTION_ID_DEV: "4060c03e-0d2e-44b7-82a3-da9376fe50b2" # Update to '{dataLandingZoneSubscriptionId}'
+  AZURE_RESOURCE_GROUP_NAME_DEV: "prvw-atmtn"                       # Update to '{dataLandingZoneName}-rg'
+  AZURE_LOCATION: "northeurope"                                     # Update to '{regionName}'
+
+
+jobs:
+  dotnet_validation:
+    name: .Net - Build and Test
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        id: checkout_repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Setup .Net version
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Restore .Net dependencies
+      - name: Restore .NET dependencies
+        id: dotnet_restore
+        run: dotnet restore
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      # Build .NET project
+      - name: Build .NET project
+        id: dotnet_build
+        run: dotnet build --no-restore
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      # Test .NET project
+      - name: Test .NET project
+        id: dotnet_test
+        run: dotnet test --no-build --verbosity normal
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+  bicep_validation:
+    name: Bicep - Build and Test
+    runs-on: ubuntu-latest
+    continue-on-error: false
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        id: checkout_repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Login to Azure
+      - name: Azure Login
+        id: azure_login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Deploy Purview Automation - validation
+      - name: Deploy Purview Automation - validation
+        id: deployment_validation
+        uses: azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          subscriptionId: ${{ inputs.azure_subscription_id }}
+          resourceGroupName: ${{ inputs.azure_resource_group_name }}
+          region: ${{ inputs.azure_location_name }}
+          template: ${{ github.workspace }}/infra/main.bicep
+          parameters: ${{ github.workspace }}/infra/params.json
+          deploymentMode: Validate
+          deploymentName: "PurviewAutomation-${{ github.sha }}"
+          failOnStdErr: false
+
+      # Deploy Purview Automation - what-if
+      - name: Deploy Purview Automation - what-if
+        id: deployment_whatif
+        uses: azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          subscriptionId: ${{ inputs.azure_subscription_id }}
+          resourceGroupName: ${{ inputs.azure_resource_group_name }}
+          region: ${{ inputs.azure_location_name }}
+          template: ${{ github.workspace }}/infra/main.bicep
+          parameters: ${{ github.workspace }}/infra/params.json
+          deploymentMode: Incremental
+          deploymentName: "PurviewAutomation-${{ github.sha }}"
+          failOnStdErr: false
+          additionalArguments: "--what-if --what-if-exclude-change-types Ignore NoChange Unsupported --what-if-result-format FullResourcePayloads"
+
+      # Log out from Azure
+      - name: Log out from Azure
+        id: azure_logout
+        uses: azure/cli@v1
+        with:
+          azcliversion: "agentazcliversion"
+          inlineScript: |
+            az logout
+    
+  bicep_deploy_dev:
+    name: Bicep - Dev Deployment
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: [ dotnet_validation, bicep_validation ]
+    if: github.event_name == 'push'
+    outputs:
+      function_name: ${{ steps.deployment_dev.outputs.function001Name }}
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        id: checkout_repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Login to Azure
+      - name: Azure Login
+        id: azure_login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Deploy Purview Automation - validation
+      - name: Deploy Purview Automation - validation
+        id: deployment_dev
+        uses: azure/arm-deploy@v1
+        with:
+          scope: resourcegroup
+          subscriptionId: ${{ inputs.azure_subscription_id }}
+          resourceGroupName: ${{ inputs.azure_resource_group_name }}
+          region: ${{ inputs.azure_location_name }}
+          template: ${{ github.workspace }}/infra/main.bicep
+          parameters: ${{ github.workspace }}/infra/params.json
+          deploymentMode: Incremental
+          deploymentName: "PurviewAutomation-${{ github.sha }}"
+          failOnStdErr: false
+
+      # Log out from Azure
+      - name: Log out from Azure
+        id: azure_logout
+        uses: azure/cli@v1
+        with:
+          azcliversion: "agentazcliversion"
+          inlineScript: |
+            az logout
+    
+  dotnet_deploy_dev:
+    name: .NET - Dev Deployment
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: [ bicep_deploy_dev ]
+    if: github.event_name == 'push'
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        id: checkout_repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Setup .Net version
+      - name: Setup .NET ${{ env.DOTNET_VERSION }}
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      # Restore .Net dependencies
+      - name: Restore .NET dependencies
+        id: dotnet_restore
+        run: dotnet restore
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+
+      # Build .NET project
+      - name: Build .NET project
+        id: dotnet_build
+        run: dotnet build --no-restore --output ./build
+        working-directory: ${{ env.WORKING_DIRECTORY }}
+      
+      # Deploy to Function
+      - name: Deploy to Function
+        id: dotnet_deploy
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{needs.bicep_deploy_dev.outputs.function_name}}
+          package: '${{ env.WORKING_DIRECTORY }}/build'
