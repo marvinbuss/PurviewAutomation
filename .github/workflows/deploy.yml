@@ -86,9 +86,9 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
-          subscriptionId: ${{ inputs.azure_subscription_id }}
-          resourceGroupName: ${{ inputs.azure_resource_group_name }}
-          region: ${{ inputs.azure_location_name }}
+          subscriptionId: ${{ env.azure_subscription_id }}
+          resourceGroupName: ${{ env.azure_resource_group_name }}
+          region: ${{ env.azure_location_name }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Validate
@@ -101,9 +101,9 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
-          subscriptionId: ${{ inputs.azure_subscription_id }}
-          resourceGroupName: ${{ inputs.azure_resource_group_name }}
-          region: ${{ inputs.azure_location_name }}
+          subscriptionId: ${{ env.azure_subscription_id }}
+          resourceGroupName: ${{ env.azure_resource_group_name }}
+          region: ${{ env.azure_location_name }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Incremental
@@ -150,9 +150,9 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
-          subscriptionId: ${{ inputs.azure_subscription_id }}
-          resourceGroupName: ${{ inputs.azure_resource_group_name }}
-          region: ${{ inputs.azure_location_name }}
+          subscriptionId: ${{ env.azure_subscription_id }}
+          resourceGroupName: ${{ env.azure_resource_group_name }}
+          region: ${{ env.azure_location_name }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Incremental
