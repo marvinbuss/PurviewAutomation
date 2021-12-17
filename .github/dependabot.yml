@@ -6,7 +6,7 @@
 version: 2
 updates:
   - package-ecosystem: "nuget"
-    directory: "/code/" # contains the SLN file
+    directory: "/code/PurviewAutomation" # contains the SLN file
     schedule:
       interval: "daily" # default = every day at 5:00 UTC
     target-branch: "component-updates"
