@@ -17,8 +17,8 @@ on:
 env:
   DOTNET_VERSION: "6.0.x"
   WORKING_DIRECTORY: "code/"
-  AZURE_SUBSCRIPTION_ID_DEV: "4060c03e-0d2e-44b7-82a3-da9376fe50b2" # Update to '{dataLandingZoneSubscriptionId}'
-  AZURE_RESOURCE_GROUP_NAME_DEV: "prvw-atmtn"                       # Update to '{dataLandingZoneName}-rg'
+  AZURE_SUBSCRIPTION_ID: "4060c03e-0d2e-44b7-82a3-da9376fe50b2" # Update to '{dataLandingZoneSubscriptionId}'
+  AZURE_RESOURCE_GROUP_NAME: "prvw-atmtn"                       # Update to '{dataLandingZoneName}-rg'
   AZURE_LOCATION: "northeurope"                                     # Update to '{regionName}'
 
 
@@ -86,8 +86,8 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
-          subscriptionId: ${{ env.azure_subscription_id }}
-          resourceGroupName: ${{ env.azure_resource_group_name }}
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
           region: ${{ env.azure_location_name }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
@@ -101,8 +101,8 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
-          subscriptionId: ${{ env.azure_subscription_id }}
-          resourceGroupName: ${{ env.azure_resource_group_name }}
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
           region: ${{ env.azure_location_name }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
@@ -150,8 +150,8 @@ jobs:
         uses: azure/arm-deploy@v1
         with:
           scope: resourcegroup
-          subscriptionId: ${{ env.azure_subscription_id }}
-          resourceGroupName: ${{ env.azure_resource_group_name }}
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
           region: ${{ env.azure_location_name }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
