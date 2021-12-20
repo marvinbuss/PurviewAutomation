@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "16804052821032399046"
+      "templateHash": "8174834208227562142"
     }
   },
   "parameters": {
@@ -165,7 +165,7 @@
             "value": "[parameters('location')]"
           },
           "prefix": {
-            "value": "[parameters('prefix')]"
+            "value": "[variables('name')]"
           },
           "tags": {
             "value": "[variables('tagsJoined')]"
@@ -1811,7 +1811,7 @@
             "value": "[variables('tagsJoined')]"
           },
           "prefix": {
-            "value": "[parameters('prefix')]"
+            "value": "[variables('name')]"
           },
           "purviewId": {
             "value": "[parameters('purviewId')]"

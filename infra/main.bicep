@@ -77,7 +77,7 @@ module functionResources 'modules/function.bicep' = {
   scope: functionResourceGroup
   params: {
     location: location
-    prefix: prefix
+    prefix: name
     tags: tagsJoined
     eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
     subnetId: subnetId
@@ -92,7 +92,6 @@ module functionResources 'modules/function.bicep' = {
     privateDnsZoneIdBlob: privateDnsZoneIdBlob
   }
 }
-
 
 module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
   name: 'eventsResourceGroup${padLeft(index, 3, '0')}'
@@ -131,7 +130,7 @@ module automationResources 'modules/automation.bicep' = {
   params: {
     location: location
     tags: tagsJoined
-    prefix: prefix
+    prefix: name
     purviewId: purviewId
     purviewRootCollectionAdminObjectIds: [
       functionResources.outputs.function001PrincipalId

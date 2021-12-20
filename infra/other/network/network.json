@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "2318482282550601573"
+      "templateHash": "14724203868893802384"
     }
   },
   "parameters": {
@@ -24,11 +24,11 @@
     },
     "servicesSubnetAddressPrefix": {
       "type": "string",
-      "defaultValue": "10.0.0.0/28"
+      "defaultValue": "10.0.0.0/27"
     },
     "functionSubnetAddressPrefix": {
       "type": "string",
-      "defaultValue": "10.0.0.16/28"
+      "defaultValue": "10.0.0.32/27"
     },
     "dnsServers": {
       "type": "array"
