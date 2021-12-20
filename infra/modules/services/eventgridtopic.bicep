@@ -7,7 +7,9 @@ targetScope = 'resourceGroup'
 param tags object
 param eventGridTopicName string
 param eventGridTopicSourceSubscriptionId string
+#disable-next-line no-unused-params
 param eventGridTopicDeadLetterStorageAccountId string
+#disable-next-line no-unused-params
 param eventGridTopicDeadLetterStorageAccountContainerName string
 param functionId string
 param createEventSubscription bool
@@ -32,15 +34,18 @@ resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubsc
   parent: eventGridTopic
   name: 'service-creation'
   properties: {
-    deadLetterWithResourceIdentity: {
-      deadLetterDestination: {
-        endpointType: 'StorageBlob'
-        properties: {
-          resourceId: eventGridTopicDeadLetterStorageAccountId
-          blobContainerName: eventGridTopicDeadLetterStorageAccountContainerName
-        }
-      }
-    }
+    // deadLetterWithResourceIdentity: {
+    //   identity: {
+    //     type: 'SystemAssigned'
+    //   }
+    //   deadLetterDestination: {
+    //     endpointType: 'StorageBlob'
+    //     properties: {
+    //       resourceId: eventGridTopicDeadLetterStorageAccountId
+    //       blobContainerName: eventGridTopicDeadLetterStorageAccountContainerName
+    //     }
+    //   }
+    // }
     destination: {
       endpointType: 'AzureFunction'
       properties: {
@@ -50,7 +55,6 @@ resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubsc
       }
     }
     eventDeliverySchema: 'EventGridSchema'
-    expirationTimeUtc: ''
     filter: {
       includedEventTypes: [
         'Microsoft.Resources.ResourceWriteSuccess'
@@ -67,3 +71,4 @@ resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubsc
 }
 
 // Outputs
+output eventGridTopicId string = eventGridTopic.id

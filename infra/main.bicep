@@ -94,7 +94,7 @@ module functionResources 'modules/function.bicep' = {
 }
 
 module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
-  name: 'eventsResourceGroup${padLeft(index, 3, '0')}'
+  name: 'eventsResourceGroup${padLeft(index + 1, 3, '0')}'
   scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
   params: {
     location: eventGridTopicSourceSubscription.location
@@ -104,7 +104,7 @@ module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for
 }]
 
 module eventsResources 'modules/events.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
-  name: 'eventsResources${padLeft(index, 3, '0')}'
+  name: 'eventsResources${padLeft(index + 1, 3, '0')}'
   scope: resourceGroup(eventGridTopicSourceSubscription.subscriptionId, eventsResourceGroupName)
   params: {
     prefix: name

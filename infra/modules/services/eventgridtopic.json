@@ -1,0 +1,92 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.4.1124.51302",
+      "templateHash": "14453811702757506806"
+    }
+  },
+  "parameters": {
+    "tags": {
+      "type": "object"
+    },
+    "eventGridTopicName": {
+      "type": "string"
+    },
+    "eventGridTopicSourceSubscriptionId": {
+      "type": "string"
+    },
+    "eventGridTopicDeadLetterStorageAccountId": {
+      "type": "string"
+    },
+    "eventGridTopicDeadLetterStorageAccountContainerName": {
+      "type": "string"
+    },
+    "functionId": {
+      "type": "string"
+    },
+    "createEventSubscription": {
+      "type": "bool"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.EventGrid/systemTopics",
+      "apiVersion": "2021-12-01",
+      "name": "[parameters('eventGridTopicName')]",
+      "location": "global",
+      "tags": "[parameters('tags')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "source": "[format('/subscriptions/{0}', parameters('eventGridTopicSourceSubscriptionId'))]",
+        "topicType": "Microsoft.Resources.Subscriptions"
+      }
+    },
+    {
+      "condition": "[parameters('createEventSubscription')]",
+      "type": "Microsoft.EventGrid/systemTopics/eventSubscriptions",
+      "apiVersion": "2021-12-01",
+      "name": "[format('{0}/{1}', parameters('eventGridTopicName'), 'service-creation')]",
+      "properties": {
+        "deadLetterWithResourceIdentity": {
+          "deadLetterDestination": {
+            "endpointType": "StorageBlob",
+            "properties": {
+              "resourceId": "[parameters('eventGridTopicDeadLetterStorageAccountId')]",
+              "blobContainerName": "[parameters('eventGridTopicDeadLetterStorageAccountContainerName')]"
+            }
+          }
+        },
+        "destination": {
+          "endpointType": "AzureFunction",
+          "properties": {
+            "resourceId": "[format('{0}/functions/PurviewAutomation', parameters('functionId'))]",
+            "maxEventsPerBatch": 1,
+            "preferredBatchSizeInKilobytes": 64
+          }
+        },
+        "eventDeliverySchema": "EventGridSchema",
+        "expirationTimeUtc": "",
+        "filter": {
+          "includedEventTypes": [
+            "Microsoft.Resources.ResourceWriteSuccess",
+            "Microsoft.Resources.ResourceDeleteSuccess"
+          ],
+          "enableAdvancedFilteringOnArrays": true
+        },
+        "labels": [],
+        "retryPolicy": {
+          "eventTimeToLiveInMinutes": 60,
+          "maxDeliveryAttempts": 5
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName'))]"
+      ]
+    }
+  ]
+}
