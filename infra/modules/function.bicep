@@ -111,7 +111,7 @@ module function001AppSettings 'services/functionAppSettings.bicep' = {
   }
 }
 
-module roleAssignmentFunctionKeyVault 'auxiliary/keyVaultRoleAssignment.bicep' = {
+module roleAssignmentFunctionKeyVault 'auxiliary/functionRoleAssignmentKeyVault.bicep' = {
   name: 'roleAssignmentFunctionKeyVault'
   scope: resourceGroup()
   params: {

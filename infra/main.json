@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "8174834208227562142"
+      "templateHash": "12244225953433625637"
     }
   },
   "parameters": {
@@ -1522,7 +1522,7 @@
       },
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
-      "name": "[format('eventsResourceGroup{0}', padLeft(copyIndex(), 3, '0'))]",
+      "name": "[format('eventsResourceGroup{0}', padLeft(add(copyIndex(), 1), 3, '0'))]",
       "subscriptionId": "[parameters('eventGridTopicSourceSubscriptions')[copyIndex()].subscriptionId]",
       "location": "[deployment().location]",
       "properties": {
@@ -1592,7 +1592,7 @@
       },
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2020-10-01",
-      "name": "[format('eventsResources{0}', padLeft(copyIndex(), 3, '0'))]",
+      "name": "[format('eventsResources{0}', padLeft(add(copyIndex(), 1), 3, '0'))]",
       "subscriptionId": "[parameters('eventGridTopicSourceSubscriptions')[copyIndex()].subscriptionId]",
       "resourceGroup": "[variables('eventsResourceGroupName')]",
       "properties": {
@@ -1630,7 +1630,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1124.51302",
-              "templateHash": "7335839546657813173"
+              "templateHash": "6515138997254437896"
             }
           },
           "parameters": {
@@ -1699,7 +1699,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1124.51302",
-                      "templateHash": "14453811702757506806"
+                      "templateHash": "3815021320541988872"
                     }
                   },
                   "parameters": {
@@ -1746,15 +1746,6 @@
                       "apiVersion": "2021-12-01",
                       "name": "[format('{0}/{1}', parameters('eventGridTopicName'), 'service-creation')]",
                       "properties": {
-                        "deadLetterWithResourceIdentity": {
-                          "deadLetterDestination": {
-                            "endpointType": "StorageBlob",
-                            "properties": {
-                              "resourceId": "[parameters('eventGridTopicDeadLetterStorageAccountId')]",
-                              "blobContainerName": "[parameters('eventGridTopicDeadLetterStorageAccountContainerName')]"
-                            }
-                          }
-                        },
                         "destination": {
                           "endpointType": "AzureFunction",
                           "properties": {
@@ -1764,7 +1755,6 @@
                           }
                         },
                         "eventDeliverySchema": "EventGridSchema",
-                        "expirationTimeUtc": "",
                         "filter": {
                           "includedEventTypes": [
                             "Microsoft.Resources.ResourceWriteSuccess",
@@ -1782,7 +1772,13 @@
                         "[resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName'))]"
                       ]
                     }
-                  ]
+                  ],
+                  "outputs": {
+                    "eventGridTopicId": {
+                      "type": "string",
+                      "value": "[resourceId('Microsoft.EventGrid/systemTopics', parameters('eventGridTopicName'))]"
+                    }
+                  }
                 }
               }
             }

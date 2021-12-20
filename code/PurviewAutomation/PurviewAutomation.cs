@@ -40,7 +40,7 @@ namespace PurviewAutomation
             var eventGridEventStatus = eventGridEventJsonObject["status"].ToString().ToLower();
             if (eventGridEventStatus != "succeeded")
             {
-                log.LogError("Received Event Grid event in a non succeeded state");
+                log.LogError($"Received Event Grid event in a non succeeded state (State: {eventGridEventStatus})");
                 throw new Exception("Received Event Grid event in a non succeeded state");
             }
 
@@ -52,11 +52,11 @@ namespace PurviewAutomation
             var eventGridEventScopeArray = eventGridEventScope.Split(separator: "/");
             if (eventGridEventScopeArray.Length < 9)
             {
-                log.LogError("Incorrect scope length");
+                log.LogError($"Incorrect scope length (Length: {eventGridEventScopeArray.Length}, Scope: {eventGridEventScope})");
                 throw new Exception("Incorrect scope length");
             }
             var purviewResourceId = GetEnvironmentVariable(name: "PurviewResourceId");
-            var purviewManagedStorageResourceId = GetEnvironmentVariable(name: "PurviewManagedStorageResourceId");
+            var purviewManagedStorageId = GetEnvironmentVariable(name: "PurviewManagedStorageId");
             var purviewManagedEventHubId = GetEnvironmentVariable(name: "PurviewManagedEventHubId");
             var purviewAccountName = purviewResourceId.Split(separator: "/")[8];
             var purviewAccountEndpoint = $"https://{purviewAccountName}.purview.azure.com/account";
@@ -81,7 +81,7 @@ namespace PurviewAutomation
                 case "Microsoft.Synapse/workspaces/write":
                     log.LogInformation("Synapse workspace creation detected");
                     PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    CreateSynapseWorkspaceAsync(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewAccountName: purviewAccountName, purviewResourceId: purviewResourceId, purviewManagedStorageResourceId: purviewManagedStorageResourceId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
+                    CreateSynapseWorkspace(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewAccountName: purviewAccountName, purviewResourceId: purviewResourceId, purviewManagedStorageId: purviewManagedStorageId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
                     break;
                 case "Microsoft.Synapse/workspaces/delete":
                     log.LogInformation("Synapse workspace deletion detected");
@@ -275,13 +275,13 @@ namespace PurviewAutomation
         /// <remarks>
         /// Onboards a Synapse Workspace to the resource group Purview Collection.
         /// </remarks>
-        private static void CreateSynapseWorkspaceAsync(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewAccountName, string purviewResourceId, string purviewManagedStorageResourceId, string purviewManagedEventHubId, ILogger log)
+        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewAccountName, string purviewResourceId, string purviewManagedStorageId, string purviewManagedEventHubId, ILogger log)
         {
             // Get synapse workspace details
             var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
             var armClient = new ArmClient(credential: credential);
             var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"));
-            var synapse = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: resourceId));
+            var synapse = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: resourceId)).Get();
 
             // Create Purview Data Source Client
             var endpoint = new Uri(uriString: purviewScanEndpoint);
@@ -300,7 +300,7 @@ namespace PurviewAutomation
                     resourceName = resourceName,
                     serverlessSqlEndpoint = $"{resourceName}-ondemand.sql.azuresynapse.net",
                     dedicatedSqlEndpoint = $"{resourceName}.sql.azuresynapse.net",
-                    location = synapse.Data.Location.ToString(),
+                    location = synapse.Value.Data.Location.ToString(),
                     collection = new
                     {
                         referenceName = resourceGroupName,
@@ -328,8 +328,8 @@ namespace PurviewAutomation
             var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
             {
                 new ManagedPrivateEndpointDetails{ Name = "Purview", GroupId = "account", ResourceId = purviewResourceId },
-                new ManagedPrivateEndpointDetails{ Name = "Purview_blob", GroupId = "blob", ResourceId = purviewManagedStorageResourceId },
-                new ManagedPrivateEndpointDetails{ Name = "Purview_queue", GroupId = "queue", ResourceId = purviewManagedStorageResourceId },
+                new ManagedPrivateEndpointDetails{ Name = "Purview_blob", GroupId = "blob", ResourceId = purviewManagedStorageId },
+                new ManagedPrivateEndpointDetails{ Name = "Purview_queue", GroupId = "queue", ResourceId = purviewManagedStorageId },
                 new ManagedPrivateEndpointDetails{ Name = "Purview_namespace", GroupId = "namespace", ResourceId = purviewManagedEventHubId }
             };
             foreach (var privateEndpointDetail in privateEndpointDetails)
@@ -357,7 +357,7 @@ namespace PurviewAutomation
 
             // Create Purview role assignment for Lineage
             var purviewRootCollectionMetadataPolicyId = GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId");
-            var pincipalId = synapse.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString();
+            var pincipalId = synapse.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString();
             CreatePurviewRoleAssignment(purviewAccountName: purviewAccountName, purviewRootCollectionName: purviewAccountName, purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId, pincipalId: pincipalId);
 
             // Add the Purview account MSI on the serverless SQL databases - blocked because of https://github.com/MicrosoftDocs/sql-docs/issues/2323
