@@ -141,8 +141,8 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Deploy Purview Automation - validation
-      - name: Deploy Purview Automation - validation
+      # Deploy Purview Automation
+      - name: Deploy Purview Automation
         id: deployment_dev
         uses: azure/arm-deploy@v1
         with:
@@ -197,6 +197,13 @@ jobs:
         run: dotnet build --no-restore --output ./build
         working-directory: ${{ env.WORKING_DIRECTORY }}
       
+      # Login to Azure
+      - name: Azure Login
+        id: azure_login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       # Deploy to Function
       - name: Deploy to Function
         id: dotnet_deploy
@@ -204,3 +211,12 @@ jobs:
         with:
           app-name: ${{needs.bicep_deploy_dev.outputs.function_name}}
           package: '${{ env.WORKING_DIRECTORY }}/build'
+
+      # Log out from Azure
+      - name: Log out from Azure
+        id: azure_logout
+        uses: azure/cli@v1
+        with:
+          azcliversion: "agentazcliversion"
+          inlineScript: |
+            az logout
