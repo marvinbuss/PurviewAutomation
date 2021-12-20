@@ -86,7 +86,7 @@ jobs:
         with:
           scope: subscription
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          region: ${{ env.azure_location_name }}
+          region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Validate
@@ -100,7 +100,7 @@ jobs:
         with:
           scope: subscription
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          region: ${{ env.azure_location_name }}
+          region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Incremental
@@ -148,7 +148,7 @@ jobs:
         with:
           scope: subscription
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          region: ${{ env.azure_location_name }}
+          region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Incremental
