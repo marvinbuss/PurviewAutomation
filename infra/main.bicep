@@ -1,7 +1,6 @@
-// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-targetScope = 'resourceGroup'
+targetScope = 'subscription'
 
 // Parameters
 @description('Specifies the location for all resources.')
@@ -32,7 +31,7 @@ param purviewRootCollectionName string
 @description('Specifies the id of the purview root collection metadata policy.')
 param purviewRootCollectionMetadataPolicyId string
 @description('Specifies the subscription ids for which event grid topics should be created.')
-param eventGridTopicSourceSubscriptionIds array
+param eventGridTopicSourceSubscriptions array
 @description('Specifies whether the event subscription from the event grid topic to the function should be created.')
 param createEventSubscription bool
 
@@ -53,137 +52,69 @@ param privateDnsZoneIdKeyVault string = ''
 // Variables
 var name = toLower('${prefix}-${environment}')
 var tagsDefault = {
-  Owner: 'Data Management and Analytics Scenario'
-  Project: 'Data Management and Analytics Scenario'
+  Owner: 'Purview Automation'
+  Project: 'Purview Automation'
   Environment: environment
   Toolkit: 'bicep'
   Name: name
 }
 var tagsJoined = union(tagsDefault, tags)
-var storage001Name = '${name}-storage001'
-var applicationInsights001Name = '${name}-insights001'
-var keyvault001Name = '${name}-vault001'
-var function001Name = '${name}-function001'
-var function001FileShareName = function001Name
 var eventGridTopicDeadLetterStorageAccountContainerName = 'deadletters'
 
 // Resources
-module storage001 'modules/services/storage.bicep' = {
-  name: 'storage001'
-  scope: resourceGroup()
+resource functionResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: '${name}-function'
+  location: location
+  tags: tagsJoined
+  properties: {}
+}
+
+module functionResources 'modules/function.bicep' = {
+  name: 'functionResources'
+  scope: functionResourceGroup
   params: {
     location: location
+    prefix: prefix
     tags: tagsJoined
+    eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
     subnetId: subnetId
-    storageName: storage001Name
-    storageContainerNames: [
-      eventGridTopicDeadLetterStorageAccountContainerName
-    ]
-    storageFileShareNames: [
-      function001FileShareName
-    ]
-    storageSkuName: 'Standard_LRS'
-    privateDnsZoneIdBlob: privateDnsZoneIdBlob
-    privateDnsZoneIdFile: privateDnsZoneIdFile
-  }
-}
-
-module applicationInsights001 'modules/services/applicationinsights.bicep' = {
-  name: 'applicationInsights001'
-  scope: resourceGroup()
-  params: {
-    location: location
-    tags: tagsJoined
-    applicationInsightsName: applicationInsights001Name
-  }
-}
-
-module keyVault001 'modules/services/keyvault.bicep' = {
-  name: 'keyVault001'
-  scope: resourceGroup()
-  params: {
-    location: location
-    tags: tagsJoined
-    subnetId: subnetId
-    keyvaultName: keyvault001Name
-    privateDnsZoneIdKeyVault: privateDnsZoneIdKeyVault
-    applicationInsightsId: applicationInsights001.outputs.applicationInsightsId
-    storageId: storage001.outputs.storageId
-  }
-}
-
-module function001 'modules/services/function.bicep' = {
-  name: 'function001'
-  scope: resourceGroup()
-  params: {
-    location: location
-    tags: tags
-    functionName: function001Name
     functionSubnetId: functionSubnetId
-  }
-}
-
-module function001AppSettings 'modules/services/functionAppSettings.bicep' = {
-  name: 'function001AppSettings'
-  scope: resourceGroup()
-  dependsOn: [
-    roleAssignmentFunctionKeyVault
-  ]
-  params: {
-    functionId: function001.outputs.functionId
     purviewId: purviewId
-    purviewManagedEventHubId: purviewManagedEventHubId
     purviewManagedStorageId: purviewManagedStorageId
+    purviewManagedEventHubId: purviewManagedEventHubId
     purviewRootCollectionName: purviewRootCollectionName
     purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
-    functionFileShareName: function001FileShareName
-    storageConnectionStringSecretUri: keyVault001.outputs.storageConnectionStringSecretUri
-    applicationInsightsInstrumentationKeySecretUri: keyVault001.outputs.applicationInsightsInstrumentationKeySecretUri
-    applicationInsightsConnectionStringSecretUri: keyVault001.outputs.applicationInsightsConnectionStringSecretUri
+    privateDnsZoneIdKeyVault: privateDnsZoneIdKeyVault
+    privateDnsZoneIdFile: privateDnsZoneIdFile
+    privateDnsZoneIdBlob: privateDnsZoneIdBlob
   }
 }
 
-module roleAssignmentFunctionKeyVault 'modules/auxiliary/keyVaultRoleAssignment.bicep' = {
-  name: 'roleAssignmentFunctionKeyVault'
-  scope: resourceGroup()
-  params: {
-    keyVaultId: keyVault001.outputs.keyvaultId
-    functionId: function001.outputs.functionId
-  }
-}
 
-module eventGridTopic 'modules/services/eventgridtopic.bicep' = [for (eventGridTopicSourceSubscriptionId, index) in eventGridTopicSourceSubscriptionIds: {
-  name: 'eventGridTopic${padLeft(index, 3, '0')}'
-  scope: resourceGroup()
+module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
+  name: 'eventsResourceGroup${padLeft(index, 3, '0')}'
+  scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
   params: {
+    location: eventGridTopicSourceSubscription.location
     tags: tags
-    eventGridTopicName: '${name}-eventGrid${padLeft(index + 1, 3, '0')}'
-    eventGridTopicSourceSubscriptionId: eventGridTopicSourceSubscriptionId
-    eventGridTopicDeadLetterStorageAccountId: storage001.outputs.storageId
-    eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
-    functionId: function001.outputs.functionId
-    createEventSubscription: createEventSubscription
+    prefix: name
   }
 }]
 
-module functionSubscriptionRoleAssignmentContributor 'modules/auxiliary/functionRoleAssignmentSubscription.bicep' = {
-  name: 'functionSubscriptionRoleAssignmentContributor'
-  scope: subscription()
+module eventsResources 'modules/events.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
+  name: 'eventsResources${padLeft(index, 3, '0')}'
+  scope: resourceGroup(eventGridTopicSourceSubscription.subscriptionId, '${name}-events')
   params: {
-    role: 'Contributor'
-    functionId: function001.outputs.functionId
+    prefix: name
+    tags: tags
+    eventGridTopicSourceSubscriptionId: eventGridTopicSourceSubscription.subscriptionId
+    createEventSubscription: createEventSubscription
+    eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
+    functionId: functionResources.outputs.function001Id
+    storageId: functionResources.outputs.storage001Id
   }
-}
-
-module functionSubscriptionRoleAssignmentUserAccessAdministrator 'modules/auxiliary/functionRoleAssignmentSubscription.bicep' = {
-  name: 'functionSubscriptionRoleAssignmentUserAccessAdministrator'
-  scope: subscription()
-  params: {
-    role: 'UserAccessAdministrator'
-    functionId: function001.outputs.functionId
-  }
-}
+}]
 
 // Outputs
-output function001Name string = function001.outputs.functionName
-output function001PrincipalId string = function001.outputs.functionPrincipalId
+output function001Name string = functionResources.outputs.function001Name
+output function001PrincipalId string = functionResources.outputs.function001PrincipalId
