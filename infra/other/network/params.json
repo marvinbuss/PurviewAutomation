@@ -6,19 +6,19 @@
             "value": "northeurope"
         },
         "prefix": {
-            "value": "prvw-atmtn"
+            "value": "prvw-atmtn-dev"
         },
         "tags": {
             "value": {}
         },
         "vnetAddressPrefix": {
-            "value": "10.254.0.0/16"
+            "value": "10.254.0.0/24"
         },
         "servicesSubnetAddressPrefix": {
-            "value": "10.254.0.0/28"
+            "value": "10.254.0.0/27"
         },
         "functionSubnetAddressPrefix": {
-            "value": "10.254.0.16/28"
+            "value": "10.254.0.32/27"
         },
         "dnsServers": {
             "value": [

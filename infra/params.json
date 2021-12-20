@@ -29,19 +29,22 @@
         "purviewRootCollectionMetadataPolicyId": {
             "value": "e647bedc-2322-4380-bfc3-cacf504e3b2f"
         },
-        "eventGridTopicSourceSubscriptionIds": {
+        "eventGridTopicSourceSubscriptions": {
             "value": [
-               "4060c03e-0d2e-44b7-82a3-da9376fe50b2"
+               {
+                   "subscriptionId": "4060c03e-0d2e-44b7-82a3-da9376fe50b2",
+                   "location": "northeurope"
+               }
             ]
         },
         "createEventSubscription": {
             "value": false
         },
         "subnetId": {
-            "value": "/subscriptions/4060c03e-0d2e-44b7-82a3-da9376fe50b2/resourceGroups/prvw-atmtn/providers/Microsoft.Network/virtualNetworks/prvw-atmtn-vnet/subnets/ServicesSubnet"
+            "value": "/subscriptions/4060c03e-0d2e-44b7-82a3-da9376fe50b2/resourceGroups/prvw-atmtn-dev-network/providers/Microsoft.Network/virtualNetworks/prvw-atmtn-dev-vnet/subnets/ServicesSubnet"
         },
         "functionSubnetId": {
-            "value": "/subscriptions/4060c03e-0d2e-44b7-82a3-da9376fe50b2/resourceGroups/prvw-atmtn/providers/Microsoft.Network/virtualNetworks/prvw-atmtn-vnet/subnets/FunctionSubnet"
+            "value": "/subscriptions/4060c03e-0d2e-44b7-82a3-da9376fe50b2/resourceGroups/prvw-atmtn-dev-network/providers/Microsoft.Network/virtualNetworks/prvw-atmtn-dev-vnet/subnets/FunctionSubnet"
         },
         "privateDnsZoneIdBlob": {
             "value": "/subscriptions/17588eb2-2943-461a-ab3f-00a3ceac3112/resourceGroups/dmz-dev-global-dns/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net"

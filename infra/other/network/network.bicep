@@ -8,8 +8,8 @@ param location string
 param prefix string
 param tags object
 param vnetAddressPrefix string = '10.0.0.0/16'
-param servicesSubnetAddressPrefix string = '10.0.0.0/28'
-param functionSubnetAddressPrefix string = '10.0.0.16/28'
+param servicesSubnetAddressPrefix string = '10.0.0.0/27'
+param functionSubnetAddressPrefix string = '10.0.0.32/27'
 param dnsServers array
 
 // Variables

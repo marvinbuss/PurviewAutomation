@@ -17,9 +17,8 @@ on:
 env:
   DOTNET_VERSION: "6.0.x"
   WORKING_DIRECTORY: "code/"
-  AZURE_SUBSCRIPTION_ID: "4060c03e-0d2e-44b7-82a3-da9376fe50b2" # Update to '{dataLandingZoneSubscriptionId}'
-  AZURE_RESOURCE_GROUP_NAME: "prvw-atmtn"                       # Update to '{dataLandingZoneName}-rg'
-  AZURE_LOCATION: "northeurope"                                     # Update to '{regionName}'
+  AZURE_SUBSCRIPTION_ID: "4060c03e-0d2e-44b7-82a3-da9376fe50b2"  # Update to '{dataLandingZoneSubscriptionId}'
+  AZURE_LOCATION: "northeurope"                                  # Update to '{regionName}'
 
 
 jobs:
@@ -85,10 +84,9 @@ jobs:
         id: deployment_validation
         uses: azure/arm-deploy@v1
         with:
-          scope: resourcegroup
+          scope: subscription
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
-          region: ${{ env.azure_location_name }}
+          region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Validate
@@ -100,10 +98,9 @@ jobs:
         id: deployment_whatif
         uses: azure/arm-deploy@v1
         with:
-          scope: resourcegroup
+          scope: subscription
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
-          region: ${{ env.azure_location_name }}
+          region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Incremental
@@ -149,10 +146,9 @@ jobs:
         id: deployment_dev
         uses: azure/arm-deploy@v1
         with:
-          scope: resourcegroup
+          scope: subscription
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
-          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
-          region: ${{ env.azure_location_name }}
+          region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
           parameters: ${{ github.workspace }}/infra/params.json
           deploymentMode: Incremental
