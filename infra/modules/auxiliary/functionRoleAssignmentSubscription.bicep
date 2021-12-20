@@ -1,4 +1,3 @@
-// Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
 // The module contains a template to create a role assignment to a Subscription.

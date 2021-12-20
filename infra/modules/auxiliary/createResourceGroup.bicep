@@ -6,14 +6,14 @@ targetScope = 'subscription'
 
 // Parameters
 param location string
-param prefix string
 param tags object
+param resourceGroupName string
 
 // Variables
 
 // Resources
 resource resourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${prefix}-events'
+  name: resourceGroupName
   location: location
   tags: tags
   properties: {}

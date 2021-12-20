@@ -67,6 +67,14 @@ module keyVault001 'services/keyvault.bicep' = {
     subnetId: subnetId
     keyvaultName: keyvault001Name
     privateDnsZoneIdKeyVault: privateDnsZoneIdKeyVault
+  }
+}
+
+module keyvault001Secrets 'auxiliary/keyVaultSecretDeployment.bicep' = {
+  name: 'keyvault001Secrets'
+  scope: resourceGroup()
+  params: {
+    keyVaultId: keyVault001.outputs.keyvaultId
     applicationInsightsId: applicationInsights001.outputs.applicationInsightsId
     storageId: storage001.outputs.storageId
   }
@@ -97,9 +105,9 @@ module function001AppSettings 'services/functionAppSettings.bicep' = {
     purviewRootCollectionName: purviewRootCollectionName
     purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
     functionFileShareName: function001FileShareName
-    storageConnectionStringSecretUri: keyVault001.outputs.storageConnectionStringSecretUri
-    applicationInsightsInstrumentationKeySecretUri: keyVault001.outputs.applicationInsightsInstrumentationKeySecretUri
-    applicationInsightsConnectionStringSecretUri: keyVault001.outputs.applicationInsightsConnectionStringSecretUri
+    storageConnectionStringSecretUri: keyvault001Secrets.outputs.storageConnectionStringSecretUri
+    applicationInsightsInstrumentationKeySecretUri: keyvault001Secrets.outputs.applicationInsightsInstrumentationKeySecretUri
+    applicationInsightsConnectionStringSecretUri: keyvault001Secrets.outputs.applicationInsightsConnectionStringSecretUri
   }
 }
 

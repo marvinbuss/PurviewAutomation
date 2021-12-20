@@ -60,10 +60,13 @@ var tagsDefault = {
 }
 var tagsJoined = union(tagsDefault, tags)
 var eventGridTopicDeadLetterStorageAccountContainerName = 'deadletters'
+var functionResourceGroupName = '${name}-function'
+var eventsResourceGroupName = '${name}-events'
+var automationResourceGroupName = '${name}-automation'
 
 // Resources
 resource functionResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
-  name: '${name}-function'
+  name: functionResourceGroupName
   location: location
   tags: tagsJoined
   properties: {}
@@ -96,17 +99,17 @@ module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for
   scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
   params: {
     location: eventGridTopicSourceSubscription.location
-    tags: tags
-    prefix: name
+    tags: tagsJoined
+    resourceGroupName: eventsResourceGroupName
   }
 }]
 
 module eventsResources 'modules/events.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
   name: 'eventsResources${padLeft(index, 3, '0')}'
-  scope: resourceGroup(eventGridTopicSourceSubscription.subscriptionId, '${name}-events')
+  scope: resourceGroup(eventGridTopicSourceSubscription.subscriptionId, eventsResourceGroupName)
   params: {
     prefix: name
-    tags: tags
+    tags: tagsJoined
     eventGridTopicSourceSubscriptionId: eventGridTopicSourceSubscription.subscriptionId
     createEventSubscription: createEventSubscription
     eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
@@ -114,6 +117,27 @@ module eventsResources 'modules/events.bicep' = [for (eventGridTopicSourceSubscr
     storageId: functionResources.outputs.storage001Id
   }
 }]
+
+resource automationResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
+  name: automationResourceGroupName
+  location: location
+  tags: tagsJoined
+  properties: {}
+}
+
+module automationResources 'modules/automation.bicep' = {
+  name: 'automationResources'
+  scope: automationResourceGroup
+  params: {
+    location: location
+    tags: tagsJoined
+    prefix: prefix
+    purviewId: purviewId
+    purviewRootCollectionAdminObjectIds: [
+      functionResources.outputs.function001PrincipalId
+    ]
+  }
+}
 
 // Outputs
 output function001Name string = functionResources.outputs.function001Name
