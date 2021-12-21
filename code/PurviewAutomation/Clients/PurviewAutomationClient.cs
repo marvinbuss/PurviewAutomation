@@ -9,6 +9,8 @@ using Azure.Analytics.Purview.Administration;
 using Azure.Analytics.Purview.Scanning;
 using PurviewAutomation.Models.Purview;
 using PurviewAutomation.Utility;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Storage;
 
 namespace PurviewAutomation.Clients;
 
@@ -84,6 +86,80 @@ internal class PurviewAutomationClient
         this.logger.LogInformation($"Purview Data Source creation response: '{response}'");
     }
 
+    internal async Task AddScanAsync(string dataSourceName, object scan, string scanName = "default", bool runScan = false, object trigger = null, object filter = null)
+    {
+        // Create client
+        var scanClient = new PurviewScanClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, scanName: scanName, credential: new DefaultAzureCredential());
+
+        // Create scan
+        var scanResponse = await scanClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: scan));
+        this.logger.LogInformation($"Purview scan creation response: '{scanResponse}'");
+
+        // Create trigger
+        if (trigger != null)
+        {
+            var triggerResponse = await scanClient.CreateOrUpdateTriggerAsync(content: RequestContent.Create(serializable: trigger));
+            this.logger.LogInformation($"Purview trigger creation response: '{triggerResponse}'");
+        }
+
+        // Create filter
+        if (filter != null)
+        {
+            var filterResponse = await scanClient.CreateOrUpdateFilterAsync(content: RequestContent.Create(serializable: filter));
+            this.logger.LogInformation($"Purview filter creation response: '{filterResponse}'");
+        }
+
+        // Run scan
+        if (runScan)
+        {
+            var scanRunResponse = await scanClient.RunScanAsync(runId: Guid.NewGuid().ToString(), options: new Azure.RequestOptions(), scanLevel: "Full");
+            this.logger.LogInformation($"Purview scan run creation response: '{scanRunResponse}'");
+        }
+    }
+
+    internal async Task AddStorageDataSourceAsync(string resourceId)
+    {
+        // Create client
+        var armClient = new ArmClient(credential: new DefaultAzureCredential());
+
+        // Parse resource id
+        if (resourceId.Split(separator: "/").Length != 9)
+        {
+            throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
+        }
+        var storageSubscriptionId = resourceId.Split(separator: "/")[2];
+        var storageResourceGroupName = resourceId.Split(separator: "/")[4];
+        var storageName = resourceId.Split( separator: "/")[8];
+
+        // Get storage account
+        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{storageSubscriptionId}/resourceGroups/{storageResourceGroupName}"));
+        var storageAccount = await resourceGroup.GetStorageAccounts().GetAsync(accountName: storageName);
+
+        // Create data source
+        var dataSource = new
+        {
+            name = storageAccount.Value.Data.Name,
+            kind = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
+            properties = new
+            {
+                resourceId = resourceId,
+                subscriptionId = storageSubscriptionId,
+                resourceGroup = storageResourceGroupName,
+                resourceName = storageAccount.Value.Data.Name,
+                endpoint = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{storageAccount.Value.Data.Name}.dfs.core.windows.net/" : $"https://{storageAccount.Value.Data.Name}.blob.core.windows.net/",
+                location = storageAccount.Value.Data.Location.ToString(),
+                collection = new
+                {
+                    referenceName = storageResourceGroupName,
+                    type = "CollectionReference"
+                }
+            }
+        };
+
+        // Add data source
+        await this.AddDataSourceAsync(dataSourceName: storageAccount.Value.Data.Name, dataSource: dataSource);
+    }
+
     internal async Task RemoveDataSourceAsync(string dataSourceName)
     {
         // Create client
@@ -127,7 +203,7 @@ internal class PurviewAutomationClient
         }
 
         // Create role asignment
-        var response = metadataPolicyClient.UpdateMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, content: RequestContent.Create(serializable: metadataPolicyObject));
+        var response = await metadataPolicyClient.UpdateMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, content: RequestContent.Create(serializable: metadataPolicyObject));
         this.logger.LogInformation($"Purview collection role assignment response: '{response}'");
     }
 }
