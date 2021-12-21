@@ -9,8 +9,6 @@ using Azure.Analytics.Purview.Administration;
 using Azure.Analytics.Purview.Scanning;
 using PurviewAutomation.Models.Purview;
 using PurviewAutomation.Utility;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Storage;
 
 namespace PurviewAutomation.Clients;
 
@@ -115,49 +113,6 @@ internal class PurviewAutomationClient
             var scanRunResponse = await scanClient.RunScanAsync(runId: Guid.NewGuid().ToString(), options: new Azure.RequestOptions(), scanLevel: "Full");
             this.logger.LogInformation($"Purview scan run creation response: '{scanRunResponse}'");
         }
-    }
-
-    internal async Task AddStorageDataSourceAsync(string resourceId)
-    {
-        // Create client
-        var armClient = new ArmClient(credential: new DefaultAzureCredential());
-
-        // Parse resource id
-        if (resourceId.Split(separator: "/").Length != 9)
-        {
-            throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
-        }
-        var storageSubscriptionId = resourceId.Split(separator: "/")[2];
-        var storageResourceGroupName = resourceId.Split(separator: "/")[4];
-        var storageName = resourceId.Split( separator: "/")[8];
-
-        // Get storage account
-        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{storageSubscriptionId}/resourceGroups/{storageResourceGroupName}"));
-        var storageAccount = await resourceGroup.GetStorageAccounts().GetAsync(accountName: storageName);
-
-        // Create data source
-        var dataSource = new
-        {
-            name = storageAccount.Value.Data.Name,
-            kind = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
-            properties = new
-            {
-                resourceId = resourceId,
-                subscriptionId = storageSubscriptionId,
-                resourceGroup = storageResourceGroupName,
-                resourceName = storageAccount.Value.Data.Name,
-                endpoint = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{storageAccount.Value.Data.Name}.dfs.core.windows.net/" : $"https://{storageAccount.Value.Data.Name}.blob.core.windows.net/",
-                location = storageAccount.Value.Data.Location.ToString(),
-                collection = new
-                {
-                    referenceName = storageResourceGroupName,
-                    type = "CollectionReference"
-                }
-            }
-        };
-
-        // Add data source
-        await this.AddDataSourceAsync(dataSourceName: storageAccount.Value.Data.Name, dataSource: dataSource);
     }
 
     internal async Task RemoveDataSourceAsync(string dataSourceName)
