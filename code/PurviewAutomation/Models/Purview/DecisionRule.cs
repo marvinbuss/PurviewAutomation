@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace PurviewAutomation.Models;
+namespace PurviewAutomation.Models.Purview;
 
 internal class DecisionRule
 {

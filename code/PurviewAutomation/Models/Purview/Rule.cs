@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Generic.Purview;
 
 namespace PurviewAutomation.Models;
 
