@@ -136,6 +136,7 @@ namespace PurviewAutomation.Clients
 
         public async Task OnboardDataSource()
         {
+            await this.purviewAutomationClient.CreateCollectionsAsync(subscriptionId: this.subscriptionId, resourceGroupName: this.resourceGroupName);
             await this.AddDataSourceAsync();
             await this.AddScanAsync();
         }
