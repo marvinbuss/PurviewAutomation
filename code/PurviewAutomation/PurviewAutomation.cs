@@ -21,7 +21,8 @@ using System.Data.Common;
 using System.Text.Json;
 using Azure.Analytics.Purview.Administration;
 
-using PurviewAutomation.Models;
+using PurviewAutomation.Models.General;
+using PurviewAutomation.Models.Purview;
 using System.IO;
 using Azure;
 
@@ -409,12 +410,12 @@ namespace PurviewAutomation
             {
                 PropertyNameCaseInsensitive = true
             };
-            var metadataPolicyObject = JsonSerializer.Deserialize<PurviewMetadataPolicy>(element: metadataPolicyJson, options: options);
+            var metadataPolicyObject = JsonSerializer.Deserialize<MetadataPolicy>(element: metadataPolicyJson, options: options);
 
             // Add principal Id
             foreach (var attributerule in metadataPolicyObject.Properties.AttributeRules)
             {
-                if (attributerule.Id.StartsWith("purviewmetadatarole_builtin_data-curator:")) // TOD Support different roles
+                if (attributerule.Id.StartsWith("purviewmetadatarole_builtin_data-curator:")) // TODO Support different roles
                 {
                     foreach (var dnfCondition in attributerule.DnfCondition[0])
                     {
@@ -445,7 +446,6 @@ namespace PurviewAutomation
         {
             // Workaround azure/azure-sdk-for-net#21048, which prevents .Content from working when dealing with responses
             // from the playback system.
-
             MemoryStream ms = new MemoryStream();
             r.ContentStream.CopyTo(ms);
             return new BinaryData(ms.ToArray());
