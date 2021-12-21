@@ -14,10 +14,10 @@ namespace PurviewAutomation.Clients;
 
 internal class PurviewAutomationClient
 {
-    private readonly string name;
-    private readonly string resourceId;
-    private readonly string managedStorageResourceId;
-    private readonly string managedEventHubId;
+    public readonly string name;
+    public readonly string resourceId;
+    public readonly string managedStorageResourceId;
+    public readonly string managedEventHubId;
     private readonly string endpoint;
     private readonly string accountEndpoint;
     private readonly string scanEndpoint;
@@ -125,13 +125,13 @@ internal class PurviewAutomationClient
         this.logger.LogInformation($"Purview Data Source deletion response: '{response}'");
     }
 
-    internal async Task AddRoleAssignmentAsync(string principalId, Role role)
+    internal async Task AddRoleAssignmentAsync(string principalId, PurviewRole role)
     {
         // Create client
         var metadataPolicyClient = new PurviewMetadataPolicyClient(endpoint: new Uri(uriString: this.endpoint), collectionName: this.rootCollectionName, credential: new DefaultAzureCredential());
 
         // Get role
-        var roleString = RoleConverter.ConvertRoleToString(role: role);
+        var roleString = PurviewRoleConverter.ConvertRoleToString(role: role);
 
         // Get metadata policy
         var metadataPolicy = await metadataPolicyClient.GetMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, options: new ());
