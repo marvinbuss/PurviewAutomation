@@ -1,16 +1,18 @@
-﻿using Azure.Analytics.Synapse.AccessControl;
-using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
-using Azure.Identity;
-using Azure.ResourceManager;
-using Microsoft.Extensions.Logging;
-using PurviewAutomation.Models.General;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Azure.Identity;
+using Azure.ResourceManager;
+using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
+using Azure.Analytics.Synapse.AccessControl;
+using PurviewAutomation.Models.General;
+using PurviewAutomation.Models.Purview;
+using Microsoft.Data.SqlClient;
 
 namespace PurviewAutomation.Clients;
 
-internal class SynapseOnboardingClient : IDataSourceOnboardingClient
+internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOnboardingClient
 {
     private readonly string name;
     private readonly string resourceId;
@@ -72,9 +74,73 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(dataSourceName: this.name, dataSource: dataSource);
     }
 
-    public Task AddScanAsync()
+    public async Task AddScanAsync(bool triggerScan = true)
     {
-        throw new NotImplementedException();
+        // Get resource
+        var synapse = await this.GetResourceAsync();
+
+        // Create scan
+        var scanName = "default";
+        var scan = new
+        {
+            name = scanName,
+            kind = "AzureSynapseWorkspaceMsi",
+            properties = new
+            {
+                // credential = null,
+                collection = new
+                {
+                    referenceName = this.resourceGroupName,
+                    type = "CollectionReference"
+                },
+                resourceTypes = new
+                {
+                    AzureSynapseServerlessSql = new
+                    {
+                        // credential = null,
+                        resourceNameFilter = new
+                        {
+                            resources = new string[] { "default" }  // TODO: List DB Schema Sources (See: "{purviewId}/scan/datasources/{synapseName}/scans/_random/enumerateResources?api-version=2018-12-01-preview")
+                        },
+                        scanRulesetName = "AzureSynapseSQL",
+                        scanRulesetType = "System"
+                    }
+                }
+            }
+        };
+
+        // Create trigger
+        var triggerName = "default";
+        var trigger = new
+        {
+            name = triggerName,
+            properties = new
+            {
+                scanLevel = "Incremental",
+                recurrence = new
+                {
+                    frequency = "Week",
+                    interval = 1,
+                    startTime = DateTime.Now.ToString("yyyy-MM-ddThh:mm:ssZ"),
+                    timezone = "UTC",
+                    schedule = new
+                    {
+                        hours = new int[] { 3 },
+                        minutes = new int[] { 0 },
+                        weekDays = new string[] { "Sunday" }
+                    }
+                }
+            }
+        };
+
+        // Create Filter
+        // Filters are already included in the scan object
+
+        // Create scan
+        if (triggerScan)
+        {
+            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: filter);
+        }
     }
 
     public async Task RemoveDataSourceAsync()
@@ -83,7 +149,7 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.name);
     }
 
-    public async Task AddManagedPrivateEndpoints()
+    public async Task AddManagedPrivateEndpointsAsync()
     {
         // Create client
         var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: new Uri(uriString: $"https://{this.name}.dev.azuresynapse.net"), credential: new DefaultAzureCredential());
@@ -133,8 +199,44 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient
         this.logger.LogInformation($"Purview role assigment response: '{roleAssignmentResponse}'");
     }
 
-    public Task OnboardDataSource()
+    /// <summary>
+    /// Adds Purview MSI identity as login to SQL Serverless. - blocked because of https://github.com/MicrosoftDocs/sql-docs/issues/2323
+    /// </summary>
+    /// <returns></returns>
+    public async Task AddSqlPurviewLoginAsync()
     {
-        throw new NotImplementedException();
+        try
+        {
+            using var connection = new SqlConnection(connectionString: $"Server=tcp:{this.name}-ondemand.sql.azuresynapse.net,1433;Initial Catalog=master;Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Default\";");
+            await connection.OpenAsync();
+
+            using var sqlCommand = new SqlCommand(cmdText: $"CREATE LOGIN [{this.purviewAutomationClient.name}] FROM EXTERNAL PROVIDER;", connection: connection);
+            await sqlCommand.ExecuteNonQueryAsync();
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(exception: ex, message: "Failed to add Purview MSI to SQL serverless databases");
+        }
+    }
+
+    public async Task OnboardDataSourceAsync(bool setupScan = true, bool triggerScan = true)
+    {
+        await this.AddDataSourceAsync();
+
+        if (setupScan)
+        {
+            // await this.AddSqlPurviewLoginAsync();
+            // await this.AddScanAsync(triggerScan: triggerScan);
+        }
+    }
+
+    public async Task OnboardLineageAsync(string principalId)
+    {
+        // Get resource
+        var synapse = await this.GetResourceAsync();
+
+        await this.AddRoleAssignmentAsync(principalId: principalId, role: SynapseRole.LinkedDataManager);
+        await this.AddManagedPrivateEndpointsAsync();
+        await this.purviewAutomationClient.AddRoleAssignmentAsync(principalId: synapse.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: PurviewRole.DataCurator);
     }
 }

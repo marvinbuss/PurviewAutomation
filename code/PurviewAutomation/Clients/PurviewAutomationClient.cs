@@ -56,7 +56,7 @@ internal class PurviewAutomationClient
             new CollectionDetails{ Name = subscriptionId, Description = $"Collection for data sources in Subscription '{subscriptionId}'", ParentCollectionName = this.rootCollectionName },
             new CollectionDetails{ Name = resourceGroupName, Description = $"Collection for data sources in Subscription '{subscriptionId}' and Resource Group '{resourceGroupName}'", ParentCollectionName = subscriptionId }
         };
-        foreach(var item in collectionDetails)
+        foreach (var item in collectionDetails)
         {
             var collectionClient = accountClient.GetCollectionClient(collectionName: item.Name);
             var collection = new
