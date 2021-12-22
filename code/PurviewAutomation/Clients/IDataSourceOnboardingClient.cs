@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 
-namespace PurviewAutomation.Clients
+namespace PurviewAutomation.Clients;
+
+internal interface IDataSourceOnboardingClient
 {
-    internal interface IDataSourceOnboardingClient
-    {
-        internal Task AddDataSourceAsync();
-        internal Task RemoveDataSourceAsync();
-        internal Task AddScanAsync();
-        internal Task OnboardDataSource();
-    }
+    internal Task AddDataSourceAsync();
+    internal Task RemoveDataSourceAsync();
+    internal Task AddScanAsync(bool triggerScan);
+    internal Task OnboardDataSourceAsync(bool setupScan = true, bool triggerScan = true);
 }
