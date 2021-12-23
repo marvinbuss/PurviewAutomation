@@ -9,15 +9,14 @@ using Azure.Analytics.Synapse.AccessControl;
 using PurviewAutomation.Models.General;
 using PurviewAutomation.Models.Purview;
 using Microsoft.Data.SqlClient;
+using Azure.ResourceManager.Resources;
 
 namespace PurviewAutomation.Clients;
 
 internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOnboardingClient
 {
-    private readonly string name;
     private readonly string resourceId;
-    private readonly string subscriptionId;
-    private readonly string resourceGroupName;
+    public readonly ResourceIdentifier resource;
     private readonly PurviewAutomationClient purviewAutomationClient;
     private readonly ILogger logger;
 
@@ -27,20 +26,19 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         {
             throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
         }
-        this.name = resourceId.Split(separator: "/")[8];
-        this.subscriptionId = resourceId.Split(separator: "/")[2];
-        this.resourceGroupName = resourceId.Split(separator: "/")[4];
+        this.resourceId = resourceId;
+        this.resource = new ResourceIdentifier(resourceId: resourceId);
         this.purviewAutomationClient = client;
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<Azure.ResourceManager.Resources.GenericResource>> GetResourceAsync()
+    private async Task<Azure.Response<GenericResource>> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: resourceId)).GetAsync();
+        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
     }
 
     public async Task AddDataSourceAsync()
@@ -51,27 +49,27 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         // Create data source
         var dataSource = new
         {
-            name = this.name,
+            name = this.resource.Name,
             kind = "AzureSynapseWorkspace",
             properties = new
             {
                 resourceId = this.resourceId,
-                subscriptionId = this.subscriptionId,
-                resourceGroup = this.resourceGroupName,
-                resourceName = this.name,
-                serverlessSqlEndpoint = $"{this.name}-ondemand.sql.azuresynapse.net",
-                dedicatedSqlEndpoint = $"{this.name}.sql.azuresynapse.net",
+                subscriptionId = this.resource.SubscriptionId,
+                resourceGroup = this.resource.ResourceGroupName,
+                resourceName = this.resource.Name,
+                serverlessSqlEndpoint = $"{this.resource.Name}-ondemand.sql.azuresynapse.net",
+                dedicatedSqlEndpoint = $"{this.resource.Name}.sql.azuresynapse.net",
                 location = synapse.Value.Data.Location.ToString(),
                 collection = new
                 {
-                    referenceName = this.resourceGroupName,
+                    referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
                 }
             }
         };
 
         // Add data source
-        await this.purviewAutomationClient.AddDataSourceAsync(dataSourceName: this.name, dataSource: dataSource);
+        await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
     public async Task AddScanAsync(bool triggerScan = true)
@@ -90,7 +88,7 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
                 // credential = null,
                 collection = new
                 {
-                    referenceName = this.resourceGroupName,
+                    referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
                 },
                 resourceTypes = new
@@ -139,20 +137,20 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         // Create scan
         if (triggerScan)
         {
-            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: filter);
+            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: null);
         }
     }
 
     public async Task RemoveDataSourceAsync()
     {
         // Remove data source
-        await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.name);
+        await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
     public async Task AddManagedPrivateEndpointsAsync()
     {
         // Create client
-        var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: new Uri(uriString: $"https://{this.name}.dev.azuresynapse.net"), credential: new DefaultAzureCredential());
+        var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: new Uri(uriString: $"https://{this.resource.Name}.dev.azuresynapse.net"), credential: new DefaultAzureCredential());
 
         // Create managed private endpoints for Purview
         var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
@@ -189,13 +187,13 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
     public async Task AddRoleAssignmentAsync(string principalId, SynapseRole role)
     {
         // Create client
-        var roleAssignmentsClient = new RoleAssignmentsClient(endpoint: new Uri(uriString: $"https://{this.name}.dev.azuresynapse.net"), credential: new DefaultAzureCredential());
+        var roleAssignmentsClient = new RoleAssignmentsClient(endpoint: new Uri(uriString: $"https://{this.resource.Name}.dev.azuresynapse.net"), credential: new DefaultAzureCredential());
 
         // Get role
         var roleGuid = SynapseRoleConverter.ConvertRoleToGuid(role: role);
 
         // Create role assignment
-        var roleAssignmentResponse = await roleAssignmentsClient.CreateRoleAssignmentAsync(roleAssignmentId: principalId, roleId: roleGuid, principalId: new Guid(principalId), scope: $"workspaces/{this.name}");
+        var roleAssignmentResponse = await roleAssignmentsClient.CreateRoleAssignmentAsync(roleAssignmentId: principalId, roleId: roleGuid, principalId: new Guid(principalId), scope: $"workspaces/{this.resource.Name}");
         this.logger.LogInformation($"Purview role assigment response: '{roleAssignmentResponse}'");
     }
 
@@ -207,10 +205,10 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
     {
         try
         {
-            using var connection = new SqlConnection(connectionString: $"Server=tcp:{this.name}-ondemand.sql.azuresynapse.net,1433;Initial Catalog=master;Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Default\";");
+            using var connection = new SqlConnection(connectionString: $"Server=tcp:{this.resource.Name}-ondemand.sql.azuresynapse.net,1433;Initial Catalog=master;Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Default\";");
             await connection.OpenAsync();
 
-            using var sqlCommand = new SqlCommand(cmdText: $"CREATE LOGIN [{this.purviewAutomationClient.name}] FROM EXTERNAL PROVIDER;", connection: connection);
+            using var sqlCommand = new SqlCommand(cmdText: $"CREATE LOGIN [{this.purviewAutomationClient.resource.Name}] FROM EXTERNAL PROVIDER;", connection: connection);
             await sqlCommand.ExecuteNonQueryAsync();
         }
         catch (Exception ex)

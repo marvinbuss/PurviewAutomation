@@ -3,27 +3,27 @@ using System.Threading.Tasks;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace PurviewAutomation.Clients;
 
 internal class StorageOnboardingClient : IDataSourceOnboardingClient
 {
-    private readonly string name;
     private readonly string resourceId;
-    private readonly string subscriptionId;
-    private readonly string resourceGroupName;
+    public readonly ResourceIdentifier resource;
     private readonly PurviewAutomationClient purviewAutomationClient;
+    private readonly ILogger logger;
 
-    internal StorageOnboardingClient(string resourceId, PurviewAutomationClient client)
+    internal StorageOnboardingClient(string resourceId, PurviewAutomationClient client, ILogger logger)
     {
         if (resourceId.Split(separator: "/").Length != 9)
         {
             throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
         }
-        this.name = resourceId.Split(separator: "/")[8];
-        this.subscriptionId = resourceId.Split(separator: "/")[2];
-        this.resourceGroupName = resourceId.Split(separator: "/")[4];
+        this.resourceId = resourceId;
+        this.resource = new ResourceIdentifier(resourceId: resourceId);
         this.purviewAutomationClient = client;
+        this.logger = logger;
     }
 
     private async Task<Azure.Response<StorageAccount>> GetStorageAsync()
@@ -32,8 +32,8 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         var armClient = new ArmClient(credential: new DefaultAzureCredential()); 
 
         // Get storage
-        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.subscriptionId}/resourceGroups/{this.resourceGroupName}"));
-        return await resourceGroup.GetStorageAccounts().GetAsync(accountName: name);
+        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));
+        return await resourceGroup.GetStorageAccounts().GetAsync(accountName: this.resource.Name);
     }
 
     public async Task AddDataSourceAsync()
@@ -44,26 +44,26 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         // Create data source
         var dataSource = new
         {
-            name = this.name,
+            name = this.resource.Name,
             kind = storage.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
             properties = new
             {
                 resourceId = resourceId,
-                subscriptionId = this.subscriptionId,
-                resourceGroup = this.resourceGroupName,
-                resourceName = this.name,
-                endpoint = storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.name}.dfs.core.windows.net/" : $"https://{this.name}.blob.core.windows.net/",
+                subscriptionId = this.resource.SubscriptionId,
+                resourceGroup = this.resource.ResourceGroupName,
+                resourceName = this.resource.Name,
+                endpoint = storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net/",
                 location = storage.Value.Data.Location.ToString(),
                 collection = new
                 {
-                    referenceName = this.resourceGroupName,
+                    referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
                 }
             }
         };
 
         // Add data source
-        await this.purviewAutomationClient.AddDataSourceAsync(dataSourceName: this.name, dataSource: dataSource);
+        await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
     public async Task AddScanAsync(bool triggerScan = true)
@@ -83,7 +83,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
                 scanRulesetType = "System",
                 collection = new
                 {
-                    referenceName = this.resourceGroupName,
+                    referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
                 }
             }
@@ -119,26 +119,25 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
             properties = new
             {
                 excludeUriPrefixes = new string[] { },
-                includeUriPrefixes = new string[] { storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.name}.dfs.core.windows.net/" : $"https://{this.name}.blob.core.windows.net" }
+                includeUriPrefixes = new string[] { storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net" }
             }
         };
 
         // Create scan
         if (triggerScan)
         {
-            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: filter);
+            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: filter);
         }
     }
 
     public async Task RemoveDataSourceAsync()
     {
         // Remove data source
-        await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.name);
+        await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan = true, bool triggerScan = true)
     {
-        await this.purviewAutomationClient.CreateCollectionsAsync(subscriptionId: this.subscriptionId, resourceGroupName: this.resourceGroupName);
         await this.AddDataSourceAsync();
 
         if (setupScan)
