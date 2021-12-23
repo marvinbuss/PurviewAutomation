@@ -1,435 +1,177 @@
 // Default URL for triggering event grid function in the local environment.
 // http://localhost:7071/runtime/webhooks/EventGrid?functionName={functionname}
+using Azure.Messaging.EventGrid;
+using Microsoft.Azure.WebJobs;
+using Microsoft.Azure.WebJobs.Extensions.EventGrid;
+using Microsoft.Extensions.Logging;
+using PurviewAutomation.Clients;
+using PurviewAutomation.Models.General;
 using System;
 using System.Text.Json.Nodes;
-using System.Collections.Generic;
-using Microsoft.Extensions.Logging;
-using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Host;
-using Microsoft.Azure.WebJobs.Extensions.EventGrid;
-using Azure.Core;
-using Azure.Identity;
-using Azure.Messaging.EventGrid;
-using Azure.Analytics.Purview.Scanning;
-using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
-using Azure.ResourceManager.Storage;
-using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
-using Azure.Analytics.Synapse.AccessControl;
-using Microsoft.Data.SqlClient;
-using System.Data.Common;
-using System.Text.Json;
-using Azure.Analytics.Purview.Administration;
-
-using PurviewAutomation.Models.General;
-using PurviewAutomation.Models.Purview;
-using System.IO;
-using Azure;
+using System.Threading.Tasks;
 
 namespace PurviewAutomation
 {
     public static class PurviewAutomation
     {
         [FunctionName("PurviewAutomation")]
-        public static void Run([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
+        public static async Task RunAsync([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
         {
             log.LogInformation("Parsing Event Grid event data");
-            var eventGridEventString = eventGridEvent.Data.ToString();
-            var eventGridEventJsonObject = JsonNode.Parse(eventGridEventString);
+            var eventDetails = GetEventDetails(eventGridEvent: eventGridEvent);
 
-            // Check if Event Grid event has state succeeded
-            var eventGridEventStatus = eventGridEventJsonObject["status"].ToString().ToLower();
-            if (eventGridEventStatus != "succeeded")
+            // Check event status
+            if (eventDetails.Status != "succeeded")
             {
-                log.LogError($"Received Event Grid event in a non succeeded state (State: {eventGridEventStatus})");
-                throw new Exception("Received Event Grid event in a non succeeded state");
+                log.LogError($"Received Event Grid event from a non-succeeded operation (State: {eventDetails.Status})");
+                throw new Exception("Received Event Grid event from a non-succeeded operation");
             }
-
-            // Parsing Event Grid details
-            var eventGridEventAction = eventGridEventJsonObject["authorization"]["action"].ToString();
-            var eventGridEventScope = eventGridEventJsonObject["authorization"]["scope"].ToString();
-
-            // Parsing scope details and get env variables
-            var eventGridEventScopeArray = eventGridEventScope.Split(separator: "/");
-            if (eventGridEventScopeArray.Length < 9)
+            // Check event Scope
+            if (eventDetails.Scope.Split(separator: "/").Length != 9)
             {
-                log.LogError($"Incorrect scope length (Length: {eventGridEventScopeArray.Length}, Scope: {eventGridEventScope})");
+                log.LogError($"Incorrect scope length (Scope: {eventDetails.Scope})");
                 throw new Exception("Incorrect scope length");
             }
-            var purviewResourceId = GetEnvironmentVariable(name: "PurviewResourceId");
-            var purviewManagedStorageId = GetEnvironmentVariable(name: "PurviewManagedStorageId");
-            var purviewManagedEventHubId = GetEnvironmentVariable(name: "PurviewManagedEventHubId");
-            var purviewAccountName = purviewResourceId.Split(separator: "/")[8];
-            var purviewAccountEndpoint = $"https://{purviewAccountName}.purview.azure.com/account";
-            var purviewScanEndpoint = $"https://{purviewAccountName}.purview.azure.com/scan";
-            var purviewRootCollectionName = GetEnvironmentVariable(name: "PurviewRootCollectionName");
-            var subscriptionId = eventGridEventScopeArray[2];
-            var resourceGroupName = eventGridEventScopeArray[4];
-            var resourceName = eventGridEventScopeArray[8];
 
-            // Check if Event Grid event action is supported and onboard dataset
-            switch (eventGridEventAction)
+            // Crate Purview automation client
+            var purviewAutomationClient = new PurviewAutomationClient(
+                resourceId: GetEnvironmentVariable(name: "PurviewResourceId"),
+                managedStorageResourceId: GetEnvironmentVariable(name: "PurviewManagedStorageId"),
+                managedEventHubId: GetEnvironmentVariable(name: "PurviewManagedEventHubId"),
+                rootCollectionName: GetEnvironmentVariable(name: "PurviewRootCollectionName"),
+                rootCollectionPolicyId: GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId"),
+                logger: log);
+            
+            // Get application settings
+            var functionPrincipalId = GetEnvironmentVariable(name: "FunctionPrincipalId");
+            var setupScan = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupScan"));
+            var triggerScan = Convert.ToBoolean(GetEnvironmentVariable(name: "TriggerScan"));
+            var setupLineage = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupLineage"));
+            var removeDataSources = Convert.ToBoolean(GetEnvironmentVariable(name: "RemoveDataSources"));
+
+            switch (eventDetails.Operation)
             {
-                case "Microsoft.Storage/storageAccounts/write":
-                    log.LogInformation("Storage Account creation detected");
-                    PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    CreateStorageAccount(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
+                case "write":
+                    log.LogInformation($"Write opreation detected");
+                    await AddDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, setupScan: setupScan, triggerScan: triggerScan, setupLineage: setupLineage, functionPrincipalId: functionPrincipalId, logger: log);
                     break;
-                case "Microsoft.Storage/storageAccounts/delete":
-                    log.LogInformation("Storage Account deletion detected");
-                    DeleteDataSource(resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
-                    break;
-                case "Microsoft.Synapse/workspaces/write":
-                    log.LogInformation("Synapse workspace creation detected");
-                    PurviewCollectionSetup(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, purviewRootCollectionName: purviewRootCollectionName, purviewAccountEndpoint: purviewAccountEndpoint, log: log);
-                    CreateSynapseWorkspace(resourceId: eventGridEventScope, subscriptionId: subscriptionId, resourceGroupName: resourceGroupName, resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, purviewAccountName: purviewAccountName, purviewResourceId: purviewResourceId, purviewManagedStorageId: purviewManagedStorageId, purviewManagedEventHubId: purviewManagedEventHubId, log: log);
-                    break;
-                case "Microsoft.Synapse/workspaces/delete":
-                    log.LogInformation("Synapse workspace deletion detected");
-                    DeleteDataSource(resourceName: resourceName, purviewScanEndpoint: purviewScanEndpoint, log: log);
+                case "delete":
+                    log.LogInformation($"Delete operation detected");
+                    if (removeDataSources)
+                    {
+                        await RemoveDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, logger: log);
+                    }
                     break;
                 default:
-                    log.LogInformation($"Unsupported Event Grid action detected: '{eventGridEventAction}'");
+                    log.LogInformation($"Unsupported operation detected: '{eventDetails.Operation}'");
                     break;
             }
         }
 
-        /// <summary> 
-        /// Creates or updates collections below the provided Purview Root collection.
+        /// <summary>
+        /// Parses the Event Grid Event
         /// </summary>
-        /// <param name="subscriptionId">Subscription ID of the resource.</param>
-        /// <param name="resourceGroupName">Resource Group Name of the Resource.</param>
-        /// <param name="purviewRootCollectionName">Name of the root collection in Purview.</param>
-        /// <param name="purviewAccountEndpoint">Account Endpoint of the Purview account.</param>
-        /// <param name="log">Logger object to capture logs.</param>
-        /// <remarks>
-        /// The Purview Root collection name is provided as environment variable via application settings (Application Setting 'PurviewRootCollectionName').
-        /// A first Purview sub-collection for the subscription is created below the Purview root collection.
-        /// A second Purview sub-collection for the resource group is created below the subscription sub-collection.
-        /// </remarks>
-        /// <exception cref="Exception">Throws an exception if the scope is incorrect.</exception>
-        private static void PurviewCollectionSetup(string subscriptionId, string resourceGroupName, string purviewRootCollectionName, string purviewAccountEndpoint, ILogger log)
+        /// <param name="eventGridEvent">Event Grid Event that triggered the function.</param>
+        /// <returns>Event details.</returns>
+        private static EventDetails GetEventDetails(EventGridEvent eventGridEvent)
         {
-            // Create Purview account client
-            var endpoint = new Uri(uriString: purviewAccountEndpoint);
-            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
-            var purviewClient = new PurviewAccountClient(endpoint: endpoint, credential: credential);
+            // Parse 
+            var eventGridEventJsonObject = JsonNode.Parse(eventGridEvent.Data.ToString());
 
-            // Create or Update Purview Collection for subscription
-            var collectionClient = purviewClient.GetCollectionClient(collectionName: subscriptionId);
-            var collectionDetails = new
+            return new EventDetails
             {
-                name = subscriptionId,
-                description = $"Collection for data sources in Subscription '{subscriptionId}'",
-                parentCollection = new
-                {
-                    referenceName = purviewRootCollectionName,
-                    type = "CollectionReference"
-                }
+                Status = eventGridEventJsonObject["status"].ToString().ToLower(),
+                Action = eventGridEventJsonObject["authorization"]["action"].ToString().ToLower(),
+                Operation = eventGridEventJsonObject["authorization"]["action"].ToString().Split(separator: "/")[^1].ToLower(),
+                Scope = eventGridEventJsonObject["authorization"]["scope"].ToString()
             };
-            var content = RequestContent.Create(serializable: collectionDetails);
-            var response = collectionClient.CreateOrUpdateCollection(content: content);
-            log.LogInformation($"Purview Collection creation response {response}");
-
-            // Create or Update Purview Collection for resource group
-            collectionClient = purviewClient.GetCollectionClient(collectionName: resourceGroupName);
-            collectionDetails = new
-            {
-                name = resourceGroupName,
-                description = $"Collection for data sources in Subscription '{subscriptionId}' and Resource Group '{resourceGroupName}'",
-                parentCollection = new
-                {
-                    referenceName = subscriptionId,
-                    type = "CollectionReference"
-                }
-            };
-            content = RequestContent.Create(serializable: collectionDetails);
-            response = collectionClient.CreateOrUpdateCollection(content: content);
-            log.LogInformation($"Purview Collection creation response {response}");
         }
 
         /// <summary>
-        /// Creates a Storage account data source in a Purview collection.
+        /// Adds the supported data source to the Purview account.
         /// </summary>
-        /// <param name="resourceId">Resource ID of the Storage Account.</param>
-        /// <param name="subscriptionId">Subscription ID of the Storage Account.</param>
-        /// <param name="resourceGroupName">Resource Group Name of the storage Account.</param>
-        /// <param name="resourceName">Name of the Storage Account.</param>
-        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
-        /// <param name="log">Logger object to capture logs.</param>
-        /// <remarks>
-        /// Onboards a Storage Account to the resource group Purview Collection.
-        /// </remarks>
-        private static void CreateStorageAccount(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, ILogger log)
+        /// <param name="eventDetails">Object containing the event details.</param>
+        /// <param name="purviewAutomationClient">Client for Purview interactionss.</param>
+        /// <param name="setupScan">Specifies whether scans should be setup.</param>
+        /// <param name="triggerScan">Specifies whether the initial scan should be triggered.</param>
+        /// <param name="setupLineage">Specifies whether lineage should be setup.</param>
+        /// <param name="functionPrincipalId">Principal ID of the function.</param>
+        /// <param name="logger">Object for logging.</param>
+        /// <returns></returns>
+        private static async Task AddDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, bool setupScan, bool triggerScan, bool setupLineage, string functionPrincipalId, ILogger logger)
         {
-            // Get storage account details
-            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
-            var armClient = new ArmClient(credential: credential);
-            var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"));
-            var storageAccounts = resourceGroup.GetStorageAccounts();
-            var storageAccount = storageAccounts.Get(accountName: resourceName);
-
-            // Create Purview Data Source Client
-            var endpoint = new Uri(uriString: purviewScanEndpoint);
-            var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
-
-            // Create a Data Source
-            var dataSourceDetails = new
+            if (eventDetails.Action == "microsoft.storage/storageaccounts/write")
             {
-                name = resourceName,
-                kind = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
-                properties = new
-                {
-                    resourceId = resourceId,
-                    subscriptionId = subscriptionId,
-                    resourceGroup = resourceGroupName,
-                    resourceName = resourceName,
-                    endpoint = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net/",
-                    location = storageAccount.Value.Data.Location.ToString(),
-                    collection = new
-                    {
-                        referenceName = resourceGroupName,
-                        type = "CollectionReference"
-                    }
-                }
-            };
-            var content = RequestContent.Create(serializable: dataSourceDetails);
-            var response = dataSourceClient.CreateOrUpdate(content: content);
-            log.LogInformation($"Purview Data Source creation response: '{response}'");
-
-            // Create a Purview Scan Client
-            var scanClient = new PurviewScanClient(endpoint: endpoint, dataSourceName: resourceName, scanName: "default", credential: credential);
-
-            // Create a Scan
-            var scanDetails = new
+                logger.LogInformation("Storage Account creation detected");
+                var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await storageOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            }
+            else if (eventDetails.Action == "microsoft.synapse/workspaces/write")
             {
-                name = "default",
-                kind = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2Msi" : "AzureStorageMsi",
-                properties = new
+                logger.LogInformation("Synapse Workspace creation detected");
+                var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await synapseOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+
+                if (setupLineage)
                 {
-                    scanRulesetName = storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
-                    scanRulesetType = "System",
-                    collection = new
-                    {
-                        referenceName = resourceGroupName,
-                        type = "CollectionReference"
-                    }
-                }
-            };
-            content = RequestContent.Create(serializable: scanDetails);
-            response = scanClient.CreateOrUpdate(content: content);
-            log.LogInformation($"Purview Scan creation response: '{response}'");
-
-            // Create a Trigger
-            var triggerDetails = new
-            {
-                name = "default",
-                properties = new
-                {
-                    scanLevel = "Incremental",
-                    recurrence = new
-                    {
-                        frequency = "Week",
-                        interval = 1,
-                        startTime = DateTime.Now.ToString("yyyy-MM-ddThh:mm:ssZ"),
-                        timezone = "UTC",
-                        schedule = new
-                        {
-                            weekDays = new string[] { "Sunday" }
-                        }
-                    }
-                }
-            };
-            content = RequestContent.Create(serializable: triggerDetails);
-            response = scanClient.CreateOrUpdateTrigger(content: content);
-            log.LogInformation($"Purview Scan Trigger creation response: '{response}'");
-
-            // Create a Filter
-            var filterDetails = new
-            {
-                properties = new
-                {
-                    excludeUriPrefixes = new string[] { },
-                    includeUriPrefixes = new string[] { storageAccount.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{resourceName}.dfs.core.windows.net/" : $"https://{resourceName}.blob.core.windows.net" }
-                }
-            };
-            content = RequestContent.Create(serializable: filterDetails);
-            response = scanClient.CreateOrUpdateFilter(content: content);
-            log.LogInformation($"Purview Filter creation response: '{response}'");
-
-            // Run Scan
-            var options = new Azure.RequestOptions();
-            var guid = Guid.NewGuid().ToString();
-            response = scanClient.RunScan(runId: guid, options: options, scanLevel: "Full");
-            log.LogInformation($"Purview Scan creation response: '{response}'");
-        }
-
-        /// <summary>
-        /// Creates a Synapse workspace data source in a Purview collection.
-        /// </summary>
-        /// <param name="resourceId">Resource ID of the Storage Account.</param>
-        /// <param name="subscriptionId">Subscription ID of the Storage Account.</param>
-        /// <param name="resourceGroupName">Resource Group Name of the storage Account.</param>
-        /// <param name="resourceName">Name of the Storage Account.</param>
-        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
-        /// <param name="log">Logger object to capture logs.</param>
-        /// <remarks>
-        /// Onboards a Synapse Workspace to the resource group Purview Collection.
-        /// </remarks>
-        private static void CreateSynapseWorkspace(string resourceId, string subscriptionId, string resourceGroupName, string resourceName, string purviewScanEndpoint, string purviewAccountName, string purviewResourceId, string purviewManagedStorageId, string purviewManagedEventHubId, ILogger log)
-        {
-            // Get synapse workspace details
-            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
-            var armClient = new ArmClient(credential: credential);
-            var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}"));
-            var synapse = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: resourceId)).Get();
-
-            // Create Purview Data Source Client
-            var endpoint = new Uri(uriString: purviewScanEndpoint);
-            var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
-
-            // Create a Data Source
-            var dataSourceDetails = new
-            {
-                name = resourceName,
-                kind = "AzureSynapseWorkspace",
-                properties = new
-                {
-                    resourceId = resourceId,
-                    subscriptionId = subscriptionId,
-                    resourceGroup = resourceGroupName,
-                    resourceName = resourceName,
-                    serverlessSqlEndpoint = $"{resourceName}-ondemand.sql.azuresynapse.net",
-                    dedicatedSqlEndpoint = $"{resourceName}.sql.azuresynapse.net",
-                    location = synapse.Value.Data.Location.ToString(),
-                    collection = new
-                    {
-                        referenceName = resourceGroupName,
-                        type = "CollectionReference"
-                    }
-                }
-            };
-            var content = RequestContent.Create(serializable: dataSourceDetails);
-            var response = dataSourceClient.CreateOrUpdate(content: content);
-            log.LogInformation($"Purview Data Source creation response: '{response}'");
-
-            // Create Synapse role assigment client
-            endpoint = new Uri(uriString: $"https://{resourceName}.dev.azuresynapse.net");
-
-            // Create Synapse role assignment
-            var functionPrincipalId = GetEnvironmentVariable(name: "FunctionPrincipalId");
-            var roleAssignmentsClient = new RoleAssignmentsClient(endpoint: endpoint, credential: credential);
-            var roleAssignmentResponse = roleAssignmentsClient.CreateRoleAssignment(roleAssignmentId: functionPrincipalId, roleId: new Guid("dd665582-e433-40ca-b183-1b1b33e73375"), principalId: new Guid(functionPrincipalId), scope: $"workspaces/{resourceName}");
-            log.LogInformation($"Purview role assigment response: '{roleAssignmentResponse}'");
-
-            // Create Synapse managed private endpoints client
-            var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: endpoint, credential: credential);
-
-            // Create managed private endpoints on managed vnet for Purview
-            var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
-            {
-                new ManagedPrivateEndpointDetails{ Name = "Purview", GroupId = "account", ResourceId = purviewResourceId },
-                new ManagedPrivateEndpointDetails{ Name = "Purview_blob", GroupId = "blob", ResourceId = purviewManagedStorageId },
-                new ManagedPrivateEndpointDetails{ Name = "Purview_queue", GroupId = "queue", ResourceId = purviewManagedStorageId },
-                new ManagedPrivateEndpointDetails{ Name = "Purview_namespace", GroupId = "namespace", ResourceId = purviewManagedEventHubId }
-            };
-            foreach (var privateEndpointDetail in privateEndpointDetails)
-            {
-                try
-                {
-                    managedPrivateEndpointsClient.Create(
-                        managedPrivateEndpointName: privateEndpointDetail.Name,
-                        managedPrivateEndpoint: new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpoint
-                        {
-                            Properties = new Azure.Analytics.Synapse.ManagedPrivateEndpoints.Models.ManagedPrivateEndpointProperties
-                            {
-                                PrivateLinkResourceId = privateEndpointDetail.ResourceId,
-                                GroupId = privateEndpointDetail.GroupId
-                            }
-                        },
-                        managedVirtualNetworkName: "default"
-                    );
-                }
-                catch (Exception ex)
-                {
-                    log.LogError(exception: ex, message: $"Private endpoint creation failed: {privateEndpointDetail}");
+                    await synapseOnboardingClient.OnboardLineageAsync(principalId: functionPrincipalId);
                 }
             }
-
-            // Create Purview role assignment for Lineage
-            var purviewRootCollectionMetadataPolicyId = GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId");
-            var pincipalId = synapse.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString();
-            CreatePurviewRoleAssignment(purviewAccountName: purviewAccountName, purviewRootCollectionName: purviewAccountName, purviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId, pincipalId: pincipalId);
-
-            // Add the Purview account MSI on the serverless SQL databases - blocked because of https://github.com/MicrosoftDocs/sql-docs/issues/2323
-            //try
-            //{
-            //    using var connection = new SqlConnection(connectionString: $"Server=tcp:{resourceName}-ondemand.sql.azuresynapse.net,1433;Initial Catalog=master;Persist Security Info=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Authentication=\"Active Directory Default\";");
-            //    connection.Open();
-
-            //    using var sqlCommand = new SqlCommand(cmdText: $"CREATE LOGIN [{purviewAccountName}] FROM EXTERNAL PROVIDER;", connection: connection);
-            //    sqlCommand.ExecuteNonQuery();
-            //}
-            //catch (Exception ex)
-            //{
-            //    log.LogError(exception: ex, message: "Failed to add Purview MSI to SQL serverless databases");
-            //}
+            else if (eventDetails.Action == "microsoft.kusto/cluster/write")
+            {
+                logger.LogInformation("Kusto Cluster creation detected");
+                var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await kustoOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            }
+            else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/write")
+            {
+                logger.LogInformation("Codmos DB creation detected");
+                var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await cosmosOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            }
+            else
+            {
+                logger.LogInformation($"Unsupported resource creation detected: {eventDetails.Scope}");
+            }
         }
 
         /// <summary>
-        /// Deletes a data source in Purview.
+        /// Removes the supported data source from the Purview account.
         /// </summary>
-        /// <param name="resourceName">Name of the resource.</param>
-        /// <param name="purviewScanEndpoint">Scan Endpoint of the Purview account.</param>
-        /// <param name="log">Logger object to capture logs.</param>
-        private static void DeleteDataSource(string resourceName, string purviewScanEndpoint, ILogger log)
+        /// <param name="eventDetails">Object containing the event details.</param>
+        /// <param name="purviewAutomationClient">Client for Purview interactionss.</param>
+        /// <param name="logger">Object for logging.</param>
+        /// <returns></returns>
+        private static async Task RemoveDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, ILogger logger)
         {
-            // Create Purview Data Source Client
-            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
-            var endpoint = new Uri(uriString: purviewScanEndpoint);
-            var dataSourceClient = new PurviewDataSourceClient(endpoint: endpoint, dataSourceName: resourceName, credential: credential);
-
-            // Delete a Data Source
-            var response = dataSourceClient.Delete();
-            log.LogInformation($"Purview Data Source deletion response: '{response}'");
-        }
-
-        private static void CreatePurviewRoleAssignment(string purviewAccountName, string purviewRootCollectionName, string purviewRootCollectionMetadataPolicyId, string pincipalId)
-        {
-            // Create Purview role client
-            var credential = new DefaultAzureCredential(includeInteractiveCredentials: true);
-            var endpoint = new Uri(uriString: $"https://{purviewAccountName}.purview.azure.com");
-            var client = new PurviewMetadataPolicyClient(endpoint: endpoint, collectionName: purviewRootCollectionName, credential: credential);
-
-            // Get Purview Metadata Policy
-            var metadataPolicy = client.GetMetadataPolicy(policyId: purviewRootCollectionMetadataPolicyId, options: new());
-
-            // Convert metadata policy to object
-            JsonElement metadataPolicyJson = JsonDocument.Parse(GetContentFromResponse(metadataPolicy)).RootElement;
-            var options = new JsonSerializerOptions
+            if (eventDetails.Action == "microsoft.storage/storageaccounts/delete")
             {
-                PropertyNameCaseInsensitive = true
-            };
-            var metadataPolicyObject = JsonSerializer.Deserialize<MetadataPolicy>(element: metadataPolicyJson, options: options);
-
-            // Add principal Id
-            foreach (var attributerule in metadataPolicyObject.Properties.AttributeRules)
-            {
-                if (attributerule.Id.StartsWith("purviewmetadatarole_builtin_data-curator:")) // TODO Support different roles
-                {
-                    foreach (var dnfCondition in attributerule.DnfCondition[0])
-                    {
-                        if (dnfCondition.AttributeName.Equals("principal.microsoft.id"))
-                        {
-                            dnfCondition.AttributeValueIncludedIn?.Add(pincipalId);
-                        }
-                    }
-                }
+                logger.LogInformation("Storage Account deletion detected");
+                var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await storageOnboardingClient.RemoveDataSourceAsync();
             }
-
-            // Create role assignment
-            var content = RequestContent.Create(metadataPolicyObject);
-            var myResponse = client.UpdateMetadataPolicy(policyId: purviewRootCollectionMetadataPolicyId, content: content);
+            else if (eventDetails.Action == "microsoft.synapse/workspaces/delete")
+            {
+                logger.LogInformation("Synapse Workspace deletion detected");
+                var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await synapseOnboardingClient.RemoveDataSourceAsync();
+            }
+            else if (eventDetails.Action == "microsoft.kusto/cluster/delete")
+            {
+                logger.LogInformation("Kusto Cluster deletion detected");
+                var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await kustoOnboardingClient.RemoveDataSourceAsync();
+            }
+            else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/delete")
+            {
+                logger.LogInformation("Codmos DB deletion detected");
+                var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+                await cosmosOnboardingClient.RemoveDataSourceAsync();
+            }
+            else
+            {
+                logger.LogInformation($"Unsupported resource deletion detected: {eventDetails.Scope}");
+            }
         }
 
         /// <summary>
@@ -440,15 +182,6 @@ namespace PurviewAutomation
         private static string GetEnvironmentVariable(string name)
         {
             return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
-        }
-
-        private static BinaryData GetContentFromResponse(Response r)
-        {
-            // Workaround azure/azure-sdk-for-net#21048, which prevents .Content from working when dealing with responses
-            // from the playback system.
-            MemoryStream ms = new MemoryStream();
-            r.ContentStream.CopyTo(ms);
-            return new BinaryData(ms.ToArray());
         }
     }
 }
