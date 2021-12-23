@@ -1,21 +1,23 @@
-﻿using System;
-using System.Text.Json;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Azure.Analytics.Purview.Administration;
+using Azure.Analytics.Purview.Scanning;
 using Azure.Core;
 using Azure.Identity;
-using Azure.Analytics.Purview.Administration;
-using Azure.Analytics.Purview.Scanning;
+using Azure.ResourceManager;
+using Azure.ResourceManager.Resources;
+using Microsoft.Extensions.Logging;
 using PurviewAutomation.Models.Purview;
 using PurviewAutomation.Utility;
+using System;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace PurviewAutomation.Clients;
 
 internal class PurviewAutomationClient
 {
-    public readonly string name;
     public readonly string resourceId;
+    public readonly ResourceIdentifier resource;
     public readonly string managedStorageResourceId;
     public readonly string managedEventHubId;
     private readonly string endpoint;
@@ -33,19 +35,28 @@ internal class PurviewAutomationClient
         {
             throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
         }
-        this.name = resourceId.Split(separator: "/")[8];
         this.resourceId = resourceId;
+        this.resource = new ResourceIdentifier(resourceId: resourceId);
         this.managedStorageResourceId = managedStorageResourceId;
         this.managedEventHubId = managedEventHubId;
-        this.endpoint = $"https://{this.name}.purview.azure.com";
-        this.accountEndpoint = $"https://{this.name}.purview.azure.com/account";
-        this.scanEndpoint = $"https://{this.name}.purview.azure.com/scan";
+        this.endpoint = $"https://{this.resource.Name}.purview.azure.com";
+        this.accountEndpoint = $"https://{this.resource.Name}.purview.azure.com/account";
+        this.scanEndpoint = $"https://{this.resource.Name}.purview.azure.com/scan";
         this.rootCollectionName = rootCollectionName;
         this.rootCollectionPolicyId = rootCollectionPolicyId;
         this.logger = logger;
     }
 
-    internal async Task CreateCollectionsAsync(string subscriptionId, string resourceGroupName)
+    public async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    {
+        // Create client
+        var armClient = new ArmClient(credential: new DefaultAzureCredential());
+
+        // Get resource
+        return await armClient.GetGenericResource(id: this.resource).GetAsync();
+    }
+
+    private async Task AddCollectionsAsync(string subscriptionId, string resourceGroupName)
     {
         // Create client
         var accountClient = new PurviewAccountClient(endpoint: new Uri(this.accountEndpoint), credential: new DefaultAzureCredential());
@@ -74,8 +85,11 @@ internal class PurviewAutomationClient
         }
     }
 
-    internal async Task AddDataSourceAsync(string dataSourceName, object dataSource)
+    internal async Task AddDataSourceAsync(string subscriptionId, string resourceGroupName, string dataSourceName, object dataSource)
     {
+        // Create collections
+        await this.AddCollectionsAsync(subscriptionId: subscriptionId, resourceGroupName: resourceGroupName);
+
         // Create client
         var dataSourceClient = new PurviewDataSourceClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, credential: new DefaultAzureCredential());
 
