@@ -116,7 +116,7 @@ public static class PurviewAutomation
                 await synapseOnboardingClient.OnboardLineageAsync(principalId: functionPrincipalId);
             }
         }
-        else if (eventDetails.Action == "microsoft.kusto/cluster/write")
+        else if (eventDetails.Action == "microsoft.kusto/clusters/write")
         {
             logger.LogInformation("Kusto Cluster creation detected");
             var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
@@ -130,7 +130,7 @@ public static class PurviewAutomation
         }
         else
         {
-            logger.LogInformation($"Unsupported resource creation detected: {eventDetails.Scope}");
+            logger.LogInformation($"Unsupported resource creation detected: {eventDetails.Action}");
         }
     }
 
@@ -155,7 +155,7 @@ public static class PurviewAutomation
             var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
             await synapseOnboardingClient.RemoveDataSourceAsync();
         }
-        else if (eventDetails.Action == "microsoft.kusto/cluster/delete")
+        else if (eventDetails.Action == "microsoft.kusto/clusters/delete")
         {
             logger.LogInformation("Kusto Cluster deletion detected");
             var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
@@ -169,7 +169,7 @@ public static class PurviewAutomation
         }
         else
         {
-            logger.LogInformation($"Unsupported resource deletion detected: {eventDetails.Scope}");
+            logger.LogInformation($"Unsupported resource deletion detected: {eventDetails.Action}");
         }
     }
 
