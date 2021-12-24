@@ -26,12 +26,6 @@ public static class PurviewAutomation
             log.LogError($"Received Event Grid event from a non-succeeded operation (State: {eventDetails.Status})");
             throw new Exception("Received Event Grid event from a non-succeeded operation");
         }
-        // Check event Scope
-        if (eventDetails.Scope.Split(separator: "/").Length != 9)
-        {
-            log.LogError($"Incorrect scope length (Scope: {eventDetails.Scope})");
-            throw new Exception("Incorrect scope length");
-        }
 
         // Crate Purview automation client
         var purviewAutomationClient = new PurviewAutomationClient(
@@ -59,7 +53,12 @@ public static class PurviewAutomation
                 log.LogInformation($"Delete operation detected");
                 if (removeDataSources)
                 {
+                    log.LogInformation($"Removing data source");
                     await RemoveDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, logger: log);
+                }
+                else
+                {
+                    log.LogInformation($"NOT removing data source because the feature is turned off");
                 }
                 break;
             default:

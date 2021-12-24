@@ -148,8 +148,8 @@ internal class PurviewAutomationClient
         var roleString = PurviewRoleConverter.ConvertRoleToString(role: role);
 
         // Get metadata policy
-        var metadataPolicy = await metadataPolicyClient.GetMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, options: new());
-        var metadataPolicyJson = JsonDocument.Parse(utf8Json: Utils.GetContentFromResponse(metadataPolicy)).RootElement;
+        var metadataPolicy = await metadataPolicyClient.GetMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, options: new ());
+        var metadataPolicyJson = JsonDocument.Parse(utf8Json: Utils.GetContentFromResponse(r: metadataPolicy)).RootElement;
         var options = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true
