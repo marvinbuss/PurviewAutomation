@@ -21,7 +21,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         {
             throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
         }
-        this.resourceId = resourceId;
+        this.resourceId = resourceId.Replace(oldValue: "/Clusters/", newValue: "/clusters/");
         this.resource = new ResourceIdentifier(resourceId: resourceId);
         this.purviewAutomationClient = client;
         this.logger = logger;
