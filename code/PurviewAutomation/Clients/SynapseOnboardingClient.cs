@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using Azure.Analytics.Synapse.AccessControl;
+using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
 using Azure.Identity;
 using Azure.ResourceManager;
-using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
-using Azure.Analytics.Synapse.AccessControl;
+using Azure.ResourceManager.Resources;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Logging;
 using PurviewAutomation.Models.General;
 using PurviewAutomation.Models.Purview;
-using Microsoft.Data.SqlClient;
-using Azure.ResourceManager.Resources;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PurviewAutomation.Clients;
 

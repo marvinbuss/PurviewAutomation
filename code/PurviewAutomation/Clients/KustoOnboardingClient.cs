@@ -33,7 +33,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: this.resource).GetAsync();
+        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
     }
 
     public async Task AddDataSourceAsync()
