@@ -46,6 +46,10 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     PurviewManagedEventHubId: purviewManagedEventHubId
     PurviewRootCollectionName: purviewRootCollectionName
     PurviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
+    SetupScan: 'True'
+    TriggerScan: 'True'
+    SetupLineage: 'True'
+    RemoveDataSources: 'True'
   }
 }
 
