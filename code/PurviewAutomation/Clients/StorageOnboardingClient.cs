@@ -29,7 +29,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
     private async Task<Azure.Response<StorageAccount>> GetStorageAsync()
     {
         // Create client
-        var armClient = new ArmClient(credential: new DefaultAzureCredential()); 
+        var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get storage
         var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));

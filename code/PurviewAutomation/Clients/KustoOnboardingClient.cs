@@ -140,7 +140,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
     internal async Task AddRoleAssignmentAsync(string principalId, KustoRole role)
     {
         throw new NotImplementedException();
-            
+
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 

@@ -10,178 +10,177 @@ using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 
-namespace PurviewAutomation
+namespace PurviewAutomation;
+
+public static class PurviewAutomation
 {
-    public static class PurviewAutomation
+    [FunctionName("PurviewAutomation")]
+    public static async Task RunAsync([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
     {
-        [FunctionName("PurviewAutomation")]
-        public static async Task RunAsync([EventGridTrigger] EventGridEvent eventGridEvent, ILogger log)
+        log.LogInformation("Parsing Event Grid event data");
+        var eventDetails = GetEventDetails(eventGridEvent: eventGridEvent);
+
+        // Check event status
+        if (eventDetails.Status != "succeeded")
         {
-            log.LogInformation("Parsing Event Grid event data");
-            var eventDetails = GetEventDetails(eventGridEvent: eventGridEvent);
-
-            // Check event status
-            if (eventDetails.Status != "succeeded")
-            {
-                log.LogError($"Received Event Grid event from a non-succeeded operation (State: {eventDetails.Status})");
-                throw new Exception("Received Event Grid event from a non-succeeded operation");
-            }
-            // Check event Scope
-            if (eventDetails.Scope.Split(separator: "/").Length != 9)
-            {
-                log.LogError($"Incorrect scope length (Scope: {eventDetails.Scope})");
-                throw new Exception("Incorrect scope length");
-            }
-
-            // Crate Purview automation client
-            var purviewAutomationClient = new PurviewAutomationClient(
-                resourceId: GetEnvironmentVariable(name: "PurviewResourceId"),
-                managedStorageResourceId: GetEnvironmentVariable(name: "PurviewManagedStorageId"),
-                managedEventHubId: GetEnvironmentVariable(name: "PurviewManagedEventHubId"),
-                rootCollectionName: GetEnvironmentVariable(name: "PurviewRootCollectionName"),
-                rootCollectionPolicyId: GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId"),
-                logger: log);
-            
-            // Get application settings
-            var functionPrincipalId = GetEnvironmentVariable(name: "FunctionPrincipalId");
-            var setupScan = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupScan"));
-            var triggerScan = Convert.ToBoolean(GetEnvironmentVariable(name: "TriggerScan"));
-            var setupLineage = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupLineage"));
-            var removeDataSources = Convert.ToBoolean(GetEnvironmentVariable(name: "RemoveDataSources"));
-
-            switch (eventDetails.Operation)
-            {
-                case "write":
-                    log.LogInformation($"Write opreation detected");
-                    await AddDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, setupScan: setupScan, triggerScan: triggerScan, setupLineage: setupLineage, functionPrincipalId: functionPrincipalId, logger: log);
-                    break;
-                case "delete":
-                    log.LogInformation($"Delete operation detected");
-                    if (removeDataSources)
-                    {
-                        await RemoveDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, logger: log);
-                    }
-                    break;
-                default:
-                    log.LogInformation($"Unsupported operation detected: '{eventDetails.Operation}'");
-                    break;
-            }
+            log.LogError($"Received Event Grid event from a non-succeeded operation (State: {eventDetails.Status})");
+            throw new Exception("Received Event Grid event from a non-succeeded operation");
+        }
+        // Check event Scope
+        if (eventDetails.Scope.Split(separator: "/").Length != 9)
+        {
+            log.LogError($"Incorrect scope length (Scope: {eventDetails.Scope})");
+            throw new Exception("Incorrect scope length");
         }
 
-        /// <summary>
-        /// Parses the Event Grid Event
-        /// </summary>
-        /// <param name="eventGridEvent">Event Grid Event that triggered the function.</param>
-        /// <returns>Event details.</returns>
-        private static EventDetails GetEventDetails(EventGridEvent eventGridEvent)
+        // Crate Purview automation client
+        var purviewAutomationClient = new PurviewAutomationClient(
+            resourceId: GetEnvironmentVariable(name: "PurviewResourceId"),
+            managedStorageResourceId: GetEnvironmentVariable(name: "PurviewManagedStorageId"),
+            managedEventHubId: GetEnvironmentVariable(name: "PurviewManagedEventHubId"),
+            rootCollectionName: GetEnvironmentVariable(name: "PurviewRootCollectionName"),
+            rootCollectionPolicyId: GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId"),
+            logger: log);
+
+        // Get application settings
+        var functionPrincipalId = GetEnvironmentVariable(name: "FunctionPrincipalId");
+        var setupScan = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupScan"));
+        var triggerScan = Convert.ToBoolean(GetEnvironmentVariable(name: "TriggerScan"));
+        var setupLineage = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupLineage"));
+        var removeDataSources = Convert.ToBoolean(GetEnvironmentVariable(name: "RemoveDataSources"));
+
+        switch (eventDetails.Operation)
         {
-            // Parse 
-            var eventGridEventJsonObject = JsonNode.Parse(eventGridEvent.Data.ToString());
-
-            return new EventDetails
-            {
-                Status = eventGridEventJsonObject["status"].ToString().ToLower(),
-                Action = eventGridEventJsonObject["authorization"]["action"].ToString().ToLower(),
-                Operation = eventGridEventJsonObject["authorization"]["action"].ToString().Split(separator: "/")[^1].ToLower(),
-                Scope = eventGridEventJsonObject["authorization"]["scope"].ToString()
-            };
-        }
-
-        /// <summary>
-        /// Adds the supported data source to the Purview account.
-        /// </summary>
-        /// <param name="eventDetails">Object containing the event details.</param>
-        /// <param name="purviewAutomationClient">Client for Purview interactionss.</param>
-        /// <param name="setupScan">Specifies whether scans should be setup.</param>
-        /// <param name="triggerScan">Specifies whether the initial scan should be triggered.</param>
-        /// <param name="setupLineage">Specifies whether lineage should be setup.</param>
-        /// <param name="functionPrincipalId">Principal ID of the function.</param>
-        /// <param name="logger">Object for logging.</param>
-        /// <returns></returns>
-        private static async Task AddDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, bool setupScan, bool triggerScan, bool setupLineage, string functionPrincipalId, ILogger logger)
-        {
-            if (eventDetails.Action == "microsoft.storage/storageaccounts/write")
-            {
-                logger.LogInformation("Storage Account creation detected");
-                var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await storageOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
-            }
-            else if (eventDetails.Action == "microsoft.synapse/workspaces/write")
-            {
-                logger.LogInformation("Synapse Workspace creation detected");
-                var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await synapseOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
-
-                if (setupLineage)
+            case "write":
+                log.LogInformation($"Write opreation detected");
+                await AddDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, setupScan: setupScan, triggerScan: triggerScan, setupLineage: setupLineage, functionPrincipalId: functionPrincipalId, logger: log);
+                break;
+            case "delete":
+                log.LogInformation($"Delete operation detected");
+                if (removeDataSources)
                 {
-                    await synapseOnboardingClient.OnboardLineageAsync(principalId: functionPrincipalId);
+                    await RemoveDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, logger: log);
                 }
-            }
-            else if (eventDetails.Action == "microsoft.kusto/cluster/write")
-            {
-                logger.LogInformation("Kusto Cluster creation detected");
-                var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await kustoOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
-            }
-            else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/write")
-            {
-                logger.LogInformation("Codmos DB creation detected");
-                var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await cosmosOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
-            }
-            else
-            {
-                logger.LogInformation($"Unsupported resource creation detected: {eventDetails.Scope}");
-            }
+                break;
+            default:
+                log.LogInformation($"Unsupported operation detected: '{eventDetails.Operation}'");
+                break;
         }
+    }
 
-        /// <summary>
-        /// Removes the supported data source from the Purview account.
-        /// </summary>
-        /// <param name="eventDetails">Object containing the event details.</param>
-        /// <param name="purviewAutomationClient">Client for Purview interactionss.</param>
-        /// <param name="logger">Object for logging.</param>
-        /// <returns></returns>
-        private static async Task RemoveDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, ILogger logger)
-        {
-            if (eventDetails.Action == "microsoft.storage/storageaccounts/delete")
-            {
-                logger.LogInformation("Storage Account deletion detected");
-                var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await storageOnboardingClient.RemoveDataSourceAsync();
-            }
-            else if (eventDetails.Action == "microsoft.synapse/workspaces/delete")
-            {
-                logger.LogInformation("Synapse Workspace deletion detected");
-                var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await synapseOnboardingClient.RemoveDataSourceAsync();
-            }
-            else if (eventDetails.Action == "microsoft.kusto/cluster/delete")
-            {
-                logger.LogInformation("Kusto Cluster deletion detected");
-                var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await kustoOnboardingClient.RemoveDataSourceAsync();
-            }
-            else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/delete")
-            {
-                logger.LogInformation("Codmos DB deletion detected");
-                var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-                await cosmosOnboardingClient.RemoveDataSourceAsync();
-            }
-            else
-            {
-                logger.LogInformation($"Unsupported resource deletion detected: {eventDetails.Scope}");
-            }
-        }
+    /// <summary>
+    /// Parses the Event Grid Event
+    /// </summary>
+    /// <param name="eventGridEvent">Event Grid Event that triggered the function.</param>
+    /// <returns>Event details.</returns>
+    private static EventDetails GetEventDetails(EventGridEvent eventGridEvent)
+    {
+        // Parse 
+        var eventGridEventJsonObject = JsonNode.Parse(eventGridEvent.Data.ToString());
 
-        /// <summary>
-        /// Returns an environment variable as string.
-        /// </summary>
-        /// <param name="name">Name of the environment variable.</param>
-        /// <returns>Value of the environment variable as string.</returns>
-        private static string GetEnvironmentVariable(string name)
+        return new EventDetails
         {
-            return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
+            Status = eventGridEventJsonObject["status"].ToString().ToLower(),
+            Action = eventGridEventJsonObject["authorization"]["action"].ToString().ToLower(),
+            Operation = eventGridEventJsonObject["authorization"]["action"].ToString().Split(separator: "/")[^1].ToLower(),
+            Scope = eventGridEventJsonObject["authorization"]["scope"].ToString()
+        };
+    }
+
+    /// <summary>
+    /// Adds the supported data source to the Purview account.
+    /// </summary>
+    /// <param name="eventDetails">Object containing the event details.</param>
+    /// <param name="purviewAutomationClient">Client for Purview interactionss.</param>
+    /// <param name="setupScan">Specifies whether scans should be setup.</param>
+    /// <param name="triggerScan">Specifies whether the initial scan should be triggered.</param>
+    /// <param name="setupLineage">Specifies whether lineage should be setup.</param>
+    /// <param name="functionPrincipalId">Principal ID of the function.</param>
+    /// <param name="logger">Object for logging.</param>
+    /// <returns></returns>
+    private static async Task AddDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, bool setupScan, bool triggerScan, bool setupLineage, string functionPrincipalId, ILogger logger)
+    {
+        if (eventDetails.Action == "microsoft.storage/storageaccounts/write")
+        {
+            logger.LogInformation("Storage Account creation detected");
+            var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await storageOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
         }
+        else if (eventDetails.Action == "microsoft.synapse/workspaces/write")
+        {
+            logger.LogInformation("Synapse Workspace creation detected");
+            var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await synapseOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+
+            if (setupLineage)
+            {
+                await synapseOnboardingClient.OnboardLineageAsync(principalId: functionPrincipalId);
+            }
+        }
+        else if (eventDetails.Action == "microsoft.kusto/cluster/write")
+        {
+            logger.LogInformation("Kusto Cluster creation detected");
+            var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await kustoOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+        }
+        else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/write")
+        {
+            logger.LogInformation("Codmos DB creation detected");
+            var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await cosmosOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+        }
+        else
+        {
+            logger.LogInformation($"Unsupported resource creation detected: {eventDetails.Scope}");
+        }
+    }
+
+    /// <summary>
+    /// Removes the supported data source from the Purview account.
+    /// </summary>
+    /// <param name="eventDetails">Object containing the event details.</param>
+    /// <param name="purviewAutomationClient">Client for Purview interactionss.</param>
+    /// <param name="logger">Object for logging.</param>
+    /// <returns></returns>
+    private static async Task RemoveDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, ILogger logger)
+    {
+        if (eventDetails.Action == "microsoft.storage/storageaccounts/delete")
+        {
+            logger.LogInformation("Storage Account deletion detected");
+            var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await storageOnboardingClient.RemoveDataSourceAsync();
+        }
+        else if (eventDetails.Action == "microsoft.synapse/workspaces/delete")
+        {
+            logger.LogInformation("Synapse Workspace deletion detected");
+            var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await synapseOnboardingClient.RemoveDataSourceAsync();
+        }
+        else if (eventDetails.Action == "microsoft.kusto/cluster/delete")
+        {
+            logger.LogInformation("Kusto Cluster deletion detected");
+            var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await kustoOnboardingClient.RemoveDataSourceAsync();
+        }
+        else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/delete")
+        {
+            logger.LogInformation("Codmos DB deletion detected");
+            var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await cosmosOnboardingClient.RemoveDataSourceAsync();
+        }
+        else
+        {
+            logger.LogInformation($"Unsupported resource deletion detected: {eventDetails.Scope}");
+        }
+    }
+
+    /// <summary>
+    /// Returns an environment variable as string.
+    /// </summary>
+    /// <param name="name">Name of the environment variable.</param>
+    /// <returns>Value of the environment variable as string.</returns>
+    private static string GetEnvironmentVariable(string name)
+    {
+        return Environment.GetEnvironmentVariable(name, EnvironmentVariableTarget.Process);
     }
 }
