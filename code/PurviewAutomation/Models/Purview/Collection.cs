@@ -1,4 +1,4 @@
-﻿namespace PurviewAutomation.Models;
+﻿namespace PurviewAutomation.Models.Purview;
 
 internal class Collection
 {

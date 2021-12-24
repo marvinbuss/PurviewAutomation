@@ -1,4 +1,4 @@
-﻿namespace PurviewAutomation.Models;
+﻿namespace PurviewAutomation.Models.General;
 
 /// <summary>
 /// Record struct for specifying managed private endpoint details.

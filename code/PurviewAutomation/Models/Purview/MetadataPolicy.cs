@@ -1,6 +1,6 @@
-﻿namespace PurviewAutomation.Models;
+﻿namespace PurviewAutomation.Models.Purview;
 
-internal class PurviewMetadataPolicy
+internal class MetadataPolicy
 {
     public string Name { get; set; }
     public string Id { get; set; }

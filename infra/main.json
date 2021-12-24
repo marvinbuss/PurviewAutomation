@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.4.1124.51302",
-      "templateHash": "12244225953433625637"
+      "templateHash": "10359820753194618313"
     }
   },
   "parameters": {
@@ -211,7 +211,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.4.1124.51302",
-              "templateHash": "1544806467378404268"
+              "templateHash": "15485701305792356331"
             }
           },
           "parameters": {
@@ -1217,7 +1217,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.4.1124.51302",
-                      "templateHash": "10539178897313475967"
+                      "templateHash": "16760078088934925437"
                     }
                   },
                   "parameters": {
@@ -1279,7 +1279,11 @@
                         "PurviewManagedStorageId": "[parameters('purviewManagedStorageId')]",
                         "PurviewManagedEventHubId": "[parameters('purviewManagedEventHubId')]",
                         "PurviewRootCollectionName": "[parameters('purviewRootCollectionName')]",
-                        "PurviewRootCollectionMetadataPolicyId": "[parameters('purviewRootCollectionMetadataPolicyId')]"
+                        "PurviewRootCollectionMetadataPolicyId": "[parameters('purviewRootCollectionMetadataPolicyId')]",
+                        "SetupScan": "True",
+                        "TriggerScan": "True",
+                        "SetupLineage": "True",
+                        "RemoveDataSources": "True"
                       }
                     }
                   ]
