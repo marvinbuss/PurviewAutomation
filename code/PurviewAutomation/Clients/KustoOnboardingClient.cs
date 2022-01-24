@@ -139,8 +139,6 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
 
     internal async Task AddRoleAssignmentAsync(string principalId, KustoRole role)
     {
-        throw new NotImplementedException();
-
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
         var kusto = await this.GetResourceAsync();
@@ -149,7 +147,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
 
         // Get tenant Id
-        string tenantId;
+        string tenantId = "";
         var tenantList = armClient.GetTenants().GetAll();
         foreach (var tenant in tenantList)
         {
@@ -178,9 +176,9 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
 
         if (setupScan)
         {
-            // var purview = await this.purviewAutomationClient.GetResourceAsync();
-            // await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
-            // await this.AddScanAsync(triggerScan: triggerScan);
+            var purview = await this.purviewAutomationClient.GetResourceAsync();
+            await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
+            await this.AddScanAsync(triggerScan: triggerScan);
         }
     }
 }
