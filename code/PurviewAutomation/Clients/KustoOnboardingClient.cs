@@ -156,7 +156,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         }
 
         // Create clustr role assignment
-        var principalAssignmentResource = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: $"{this.resourceId}/principalAssignments/{new Guid()}"));
+        var principalAssignmentResource = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: $"{this.resourceId}/principalAssignments/{Guid.NewGuid()}"));
         var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
         {
             Properties = new
@@ -167,7 +167,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
                 tenantId = tenantId
             }
         };
-        await principalAssignmentResource.UpdateAsync(parameters: principalAssignmentResourceParameters, waitForCompletion: true);
+        await principalAssignmentResource.UpdateAsync(parameters: principalAssignmentResourceParameters, waitForCompletion: true, );
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
@@ -176,9 +176,9 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
 
         if (setupScan)
         {
-            var purview = await this.purviewAutomationClient.GetResourceAsync();
-            await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
-            await this.AddScanAsync(triggerScan: triggerScan);
+            // var purview = await this.purviewAutomationClient.GetResourceAsync();
+            // await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
+            // await this.AddScanAsync(triggerScan: triggerScan);
         }
     }
 }
