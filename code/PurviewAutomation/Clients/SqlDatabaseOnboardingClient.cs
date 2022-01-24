@@ -17,7 +17,7 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
 
     internal SqlDatabaseOnboardingClient(string resourceId, PurviewAutomationClient client, ILogger logger)
     {
-        if (resourceId.Split(separator: "/").Length != 9)
+        if (resourceId.Split(separator: "/").Length != 11)
         {
             throw new ArgumentException(message: "Incorrect Resource IDs provided", paramName: nameof(resourceId));
         }
