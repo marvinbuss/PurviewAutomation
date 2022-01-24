@@ -143,12 +143,33 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
 
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
+        var kusto = await this.GetResourceAsync();
 
         // Get role
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
 
-        // TODO: Create role assignment via ARM
-        armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: $""))
+        // Get tenant Id
+        string tenantId;
+        var tenantList = armClient.GetTenants().GetAll();
+        foreach (var tenant in tenantList)
+        {
+            tenantId = tenant.Data.TenantId;
+            break;
+        }
+
+        // Create clustr role assignment
+        var principalAssignmentResource = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: $"{this.resourceId}/principalAssignments/{new Guid()}"));
+        var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
+        {
+            Properties = new
+            {
+                principalId = principalId,
+                principalType = "App",
+                role = KustoRoleConverter.ConvertRoleToString(role: role),
+                tenantId = tenantId
+            }
+        };
+        await principalAssignmentResource.UpdateAsync(parameters: principalAssignmentResourceParameters, waitForCompletion: true);
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
