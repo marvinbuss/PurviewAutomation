@@ -148,6 +148,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
 
         // TODO: Create role assignment via ARM
+        armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: $""))
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
