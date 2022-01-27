@@ -1,6 +1,12 @@
 # Purview Event-driven Automation
 
-This solution aims to 
+This solution aims to automate the following tasks within a Purview account:
+
+1. Discovery of Data Sources within the Data Platform.
+2. Onboarding of Data Sources within the respective Purview Collection.
+3. Setup of Managed Private Endpoints onto the managed virtual network inside Purview.
+4. Setup of Scanning and Triggers for Data Sources.
+5. Setup of Lineage for supported Data Sources (Synapse, Data Factory, etc.).
 
 ## Supported Services
 
@@ -20,6 +26,8 @@ The table below provides and overview of the currently supported data sources an
 | Azure Data Factory            | :x:                    | :x:                            | N/A                | :x:                |
 | Azure Data Share              | :x:                    | :x:                            | N/A                | :x:                |
 
+The solution will primarily focus on Azure Data Sources today and not support any non-native services for the time being.
+
 ## Manual Steps after Deployment
 
-After the deployment of this solution, you will have to add the Function MSI to the Purview Root Collection as Data Source Admin. This is required, so that the function can successfully  onboard data sources and lineage sources to Purview. 
+After the deployment of this solution, you will have to add the Function MSI to the Purview Root Collection as Data Source Admin. This is required, so that the function can successfully  onboard data sources and lineage sources to Purview.
