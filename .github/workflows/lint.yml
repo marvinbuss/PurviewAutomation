@@ -30,3 +30,4 @@ jobs:
           VALIDATE_JSCPD: false
           VALIDATE_JSON: false
           FILTER_REGEX_EXCLUDE: (/.devcontainer/|/reference/)
+          VALIDATE_YAML: false
