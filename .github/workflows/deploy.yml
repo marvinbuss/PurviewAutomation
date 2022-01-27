@@ -227,9 +227,7 @@ jobs:
     continue-on-error: false
     needs: [ dotnet_deploy_dev ]
     if: github.event_name == 'push'
-    outputs:
-      function_name: ${{ steps.deployment_dev.outputs.function001Name }}
-
+    
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - name: Checkout repository
