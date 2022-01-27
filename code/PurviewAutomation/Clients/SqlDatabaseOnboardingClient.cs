@@ -97,5 +97,4 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
             // await this.AddScanAsync(triggerScan: triggerScan);
         }
     }
-
 }
