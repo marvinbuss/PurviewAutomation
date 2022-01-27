@@ -8,5 +8,4 @@ internal class Rule
     public string? AttributeValueIncludes { get; set; }
     public string? FromRule { get; set; }
     public List<string>? AttributeValueIncludedIn { get; set; }
-
 }

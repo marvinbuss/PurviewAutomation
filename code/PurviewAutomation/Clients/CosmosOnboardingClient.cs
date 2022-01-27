@@ -85,5 +85,4 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
             // await this.AddScanAsync(triggerScan: triggerScan);
         }
     }
-
 }
