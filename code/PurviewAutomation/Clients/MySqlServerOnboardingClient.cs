@@ -51,7 +51,7 @@ internal class MySqlServerOnboardingClient : IDataSourceOnboardingClient
                 subscriptionId = this.resource.SubscriptionId,
                 resourceGroup = this.resource.ResourceGroupName,
                 resourceName = this.resource.Name,
-                serverEndpoint = $"{mySqlServer.Value.Data.Name}.mysql.database.azure.com"
+                serverEndpoint = $"{mySqlServer.Value.Data.Name}.mysql.database.azure.com",
                 location = mySqlServer.Value.Data.Location.ToString(),
                 part = "3306",
                 collection = new
