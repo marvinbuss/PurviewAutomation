@@ -53,7 +53,7 @@ internal class MySqlServerOnboardingClient : IDataSourceOnboardingClient
                 resourceName = this.resource.Name,
                 serverEndpoint = $"{mySqlServer.Value.Data.Name}.mysql.database.azure.com",
                 location = mySqlServer.Value.Data.Location.ToString(),
-                part = "3306",
+                port = "3306",
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
