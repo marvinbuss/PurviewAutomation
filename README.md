@@ -20,9 +20,21 @@ Below you will find some of the core capabilities:
 
 ## Event-driven onboarding of Data Sources
 
-The solution will onboard data sources based on events. In addition, a collection structure will automatically be created within your Purview account.
+The solution onboards data sources automatically to a Purview collection when a new data source gets created within an Azure subscription. The a collection structure will be automatically created within your Purview account.
 
+![Event-driven onboarding of Data Sources](/docs/images/PurviewOnboarding.gif)
 
+## Event-driven removal of Data Sources
+
+The solution can remove data sources when they get deleted in Azure. Scaned data assets will not get removed when data sources get deleted from a Purview collection. This feature can be disabled.
+
+![Event-driven removal of Data Sources](/docs/images/PurviewRemoval.gif)
+
+## Automated setup of Scans
+
+The solution can automatically create and trigger scans for data services. This feature can be disabled.
+
+![Automated setup of Scans](/docs/images/PurviewScanning.gif)
 
 ## More Details
 
