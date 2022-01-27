@@ -124,9 +124,21 @@ public static class PurviewAutomation
         }
         else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/write")
         {
-            logger.LogInformation("Codmos DB creation detected");
+            logger.LogInformation("Cosmos DB creation detected");
             var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
             await cosmosOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+        }
+        else if (eventDetails.Action == "microsoft.sql/servers/write")
+        {
+            logger.LogInformation("SQL Server creation detected");
+            var sqlServerOnboardingClient = new SqlServerOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await sqlServerOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+        }
+        else if (eventDetails.Action == "microsoft.sql/servers/databases/write")
+        {
+            logger.LogInformation("SQL Database creation detected");
+            var sqlDatabaseOnboardingClient = new SqlDatabaseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await sqlDatabaseOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
         }
         else
         {
@@ -163,9 +175,21 @@ public static class PurviewAutomation
         }
         else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/delete")
         {
-            logger.LogInformation("Codmos DB deletion detected");
+            logger.LogInformation("Cosmos DB deletion detected");
             var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
             await cosmosOnboardingClient.RemoveDataSourceAsync();
+        }
+        else if (eventDetails.Action == "microsoft.sql/servers/delete")
+        {
+            logger.LogInformation("SQL Server deletion detected");
+            var sqlServerOnboardingClient = new SqlServerOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await sqlServerOnboardingClient.RemoveDataSourceAsync();
+        }
+        else if (eventDetails.Action == "microsoft.sql/servers/databases/delete")
+        {
+            logger.LogInformation("SQL Database deletion detected");
+            var sqlDatabaseOnboardingClient = new SqlDatabaseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
+            await sqlDatabaseOnboardingClient.RemoveDataSourceAsync();
         }
         else
         {

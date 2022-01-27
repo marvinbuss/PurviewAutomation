@@ -139,15 +139,40 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
 
     internal async Task AddRoleAssignmentAsync(string principalId, KustoRole role)
     {
-        throw new NotImplementedException();
+        // Get resource
+        var kusto = await this.GetResourceAsync();
+        var roleAssignmentResourceId = $"{this.resourceId}/principalAssignments/{Guid.NewGuid()}";
 
         // Create client
-        var armClient = new ArmClient(credential: new DefaultAzureCredential());
+        var armClientOptions = new ArmClientOptions();
+        armClientOptions.ApiVersions.SetApiVersion(resourceType: new ResourceType(resourceIdOrType: roleAssignmentResourceId), apiVersion: "2021-01-01");
+        var armClient = new ArmClient(credential: new DefaultAzureCredential(), options: armClientOptions);
 
         // Get role
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
 
-        // TODO: Create role assignment via ARM
+        // Get tenant Id
+        string tenantId = "";
+        var tenantList = armClient.GetTenants().GetAll();
+        foreach (var tenant in tenantList)
+        {
+            tenantId = tenant.Data.TenantId;
+            break;
+        }
+
+        // Create clustr role assignment
+        var principalAssignmentResource = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: roleAssignmentResourceId));
+        var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
+        {
+            Properties = new
+            {
+                principalId = principalId,
+                principalType = "App",
+                role = KustoRoleConverter.ConvertRoleToString(role: role),
+                tenantId = tenantId
+            }
+        };
+        await principalAssignmentResource.UpdateAsync(parameters: principalAssignmentResourceParameters, waitForCompletion: true);
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)

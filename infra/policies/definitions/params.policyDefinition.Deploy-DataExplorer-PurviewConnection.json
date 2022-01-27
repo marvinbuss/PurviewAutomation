@@ -1,0 +1,111 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "policyName": {
+            "value": "Deploy-DataFactory-ManagedVirtualNetwork"
+        },
+        "policyDescription": {
+            "value": "Deploy managed virtualnetwork for data factory."
+        },
+        "policyMode": {
+            "value": "Indexed"
+        },
+        "policyParameters": {
+            "value": {
+                "effect": {
+                    "type": "String",
+                    "metadata": {
+                        "displayName": "Effect",
+                        "description": "Enable or disable the execution of the policy"
+                    },
+                    "allowedValues": [
+                        "DeployIfNotExists",
+                        "Disabled"
+                    ],
+                    "defaultValue": "DeployIfNotExists"
+                },
+                "purviewPrincipalId": {
+                    "type": "String",
+                    "metadata": {
+                        "displayName": "Purview Id",
+                        "description": "Principal Id of the managed identity of the Purview account that should be connected to Kusto/Data Explorer"
+                    }
+                }
+            }
+        },
+        "policyDefinition": {
+            "value": {
+                "if": {
+                    "allOf": [
+                        {
+                            "field": "type",
+                            "equals": "Microsoft.Kusto/clusters"
+                        }
+                    ]
+                },
+                "then": {
+                    "effect": "[parameters('effect')]",
+                    "details": {
+                        "type": "Microsoft.Kusto/clusters/principalAssignments",
+                        "roleDefinitionIds": [
+                            "/providers/Microsoft.Authorization/roleDefinitions/673868aa-7521-48a0-acc6-0f60742d39f5"
+                        ],
+                        "deployment": {
+                            "properties": {
+                                "mode": "incremental",
+                                "template": {
+                                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                                    "contentVersion": "1.0.0.0",
+                                    "parameters": {
+                                        "kustoName": {
+                                            "type": "string"
+                                        },
+                                        "kustoId": {
+                                            "type": "string"
+                                        },
+                                        "purviewPrincipalId": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "resources": [
+                                        {
+                                            "type": "Microsoft.Kusto/clusters/principalAssignments",
+                                            "apiVersion": "2021-01-01",
+                                            "name": "[concat(parameters('kustoName'), '/', guid(parameters('kustoId'), parameters('purviewPrincipalId')))]",
+                                            "properties": {
+                                                "principalId": "[parameters('purviewPrincipalId')]",
+                                                "principalType": "App",
+                                                "role": "AllDatabasesViewer",
+                                                "tenantId": "[subscription().tenantId]"
+                                            }
+                                        }
+                                    ]
+                                },
+                                "parameters": {
+                                    "kustoName": {
+                                        "value": "[field('name')]"
+                                    },
+                                    "kustoId": {
+                                        "value": "[field('id')]"
+                                    },
+                                    "purviewPrincipalId": {
+                                        "value": "[parameters('purviewPrincipalId')]"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "policyMetadata": {
+            "value": {
+                "version": "1.0.0",
+                "category": "Data Explorer",
+                "preview": false,
+                "deprecated": false
+            }
+        }
+    }
+}

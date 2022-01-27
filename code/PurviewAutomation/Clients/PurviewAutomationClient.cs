@@ -135,8 +135,15 @@ internal class PurviewAutomationClient
         var dataSourceClient = new PurviewDataSourceClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, credential: new DefaultAzureCredential());
 
         // Remove data source
-        var response = await dataSourceClient.DeleteAsync();
-        this.logger.LogInformation($"Purview Data Source deletion response: '{response}'");
+        try
+        {
+            var response = await dataSourceClient.DeleteAsync();
+            this.logger.LogInformation($"Purview Data Source deletion response: '{response}'");
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogInformation($"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful: '{ex.Message}'");
+        }
     }
 
     internal async Task AddRoleAssignmentAsync(string principalId, PurviewRole role)
