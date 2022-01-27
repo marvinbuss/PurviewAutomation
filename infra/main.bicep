@@ -138,6 +138,25 @@ module automationResources 'modules/automation.bicep' = {
   }
 }
 
+// Role assignment
+module purviewSubscriptionRoleAssignmentReader 'modules/auxiliary/purviewRoleAssignmentSubscription.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
+  name: 'purviewSubscriptionRoleAssignmentReader'
+  scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
+  params: {
+    purviewId: purviewId
+    role: 'Reader'
+  }
+}]
+
+module purviewSubscriptionRoleAssignmentStorageBlobReader 'modules/auxiliary/purviewRoleAssignmentSubscription.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
+  name: 'purviewSubscriptionRoleAssignmentStorageBlobReader'
+  scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
+  params: {
+    purviewId: purviewId
+    role: 'StorageBlobDataReader'
+  }
+}]
+
 // Outputs
 output function001Name string = functionResources.outputs.function001Name
 output function001PrincipalId string = functionResources.outputs.function001PrincipalId
