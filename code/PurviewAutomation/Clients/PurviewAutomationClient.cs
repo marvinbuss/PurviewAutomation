@@ -142,7 +142,7 @@ internal class PurviewAutomationClient
         }
         catch (Exception ex)
         {
-            this.logger.LogInformation($"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful: '{ex.Message}'")
+            this.logger.LogInformation($"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful: '{ex.Message}'");
         }
     }
 
