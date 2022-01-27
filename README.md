@@ -41,3 +41,5 @@ The solution can automatically create and trigger scans for data services. This 
 1. [Supported Services](/docs/SupportedServices.md)
 2. [Access Requirements](/docs/AccessRequirements.md)
 3. [Default Collection Structure](/docs/DefaultCollectionStructure.md)
+4. [Application Settings](/docs/ApplicationSettings.md)
+5. [Architecture](/docs/Architecture.md)
