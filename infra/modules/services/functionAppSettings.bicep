@@ -17,6 +17,7 @@ param purviewRootCollectionMetadataPolicyId string
 
 // Variables
 var functionName = length(split(functionId, '/')) == 9 ? last(split(functionId, '/')) : 'incorrectSegmentLength'
+var purviewName = length(split(purviewId, '/')) == 9 ? last(split(purviewId, '/')) : 'incorrectSegmentLength'
 
 // Resources
 resource function 'Microsoft.Web/sites@2021-02-01' existing = {
@@ -44,7 +45,7 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     PurviewResourceId: purviewId
     PurviewManagedStorageId: purviewManagedStorageId
     PurviewManagedEventHubId: purviewManagedEventHubId
-    PurviewRootCollectionName: purviewRootCollectionName
+    PurviewRootCollectionName: purviewName
     PurviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
     SetupScan: 'True'
     TriggerScan: 'True'

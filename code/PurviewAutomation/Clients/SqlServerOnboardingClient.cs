@@ -82,5 +82,4 @@ internal class SqlServerOnboardingClient : IDataSourceOnboardingClient
             // await this.AddScanAsync(triggerScan: triggerScan);
         }
     }
-
 }
