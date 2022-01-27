@@ -116,9 +116,9 @@ jobs:
           azcliversion: "agentazcliversion"
           inlineScript: |
             az logout
-    
+  
   bicep_deploy_dev:
-    name: Bicep - Dev Deployment
+    name: Bicep - Dev Deployment w/o Event Subscription
     runs-on: ubuntu-latest
     continue-on-error: false
     needs: [ dotnet_validation, bicep_validation ]
@@ -150,7 +150,7 @@ jobs:
           subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
           region: ${{ env.AZURE_LOCATION }}
           template: ${{ github.workspace }}/infra/main.bicep
-          parameters: ${{ github.workspace }}/infra/params.json
+          parameters: ${{ github.workspace }}/infra/params.json createEventSubscription=false
           deploymentMode: Incremental
           deploymentName: "PurviewAutomation-${{ github.sha }}"
           failOnStdErr: false
@@ -211,6 +211,53 @@ jobs:
         with:
           app-name: ${{needs.bicep_deploy_dev.outputs.function_name}}
           package: '${{ env.WORKING_DIRECTORY }}/build'
+
+      # Log out from Azure
+      - name: Log out from Azure
+        id: azure_logout
+        uses: azure/cli@v1
+        with:
+          azcliversion: "agentazcliversion"
+          inlineScript: |
+            az logout
+
+  bicep_deploy_dev_w_event_subscription:
+    name: Bicep - Dev Deployment w/ Event Subscription
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs: [ dotnet_deploy_dev ]
+    if: github.event_name == 'push'
+    outputs:
+      function_name: ${{ steps.deployment_dev.outputs.function001Name }}
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - name: Checkout repository
+        id: checkout_repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      # Login to Azure
+      - name: Azure Login
+        id: azure_login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Deploy Purview Automation
+      - name: Deploy Purview Automation
+        id: deployment_dev
+        uses: azure/arm-deploy@v1
+        with:
+          scope: subscription
+          subscriptionId: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          region: ${{ env.AZURE_LOCATION }}
+          template: ${{ github.workspace }}/infra/main.bicep
+          parameters: ${{ github.workspace }}/infra/params.json createEventSubscription=true
+          deploymentMode: Incremental
+          deploymentName: "PurviewAutomation-${{ github.sha }}"
+          failOnStdErr: false
 
       # Log out from Azure
       - name: Log out from Azure
