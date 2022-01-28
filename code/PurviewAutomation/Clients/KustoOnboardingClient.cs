@@ -161,18 +161,19 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         }
 
         // Create clustr role assignment
-        var principalAssignmentResource = armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: roleAssignmentResourceId));
+        var resourceGroup = armClient.GetSubscription(id: new ResourceIdentifier($"/subscriptions/{this.resource.SubscriptionId}"));
+        var genericResources = resourceGroup.GetGenericResources();
         var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
         {
             Properties = new
             {
                 principalId = principalId,
                 principalType = "App",
-                role = KustoRoleConverter.ConvertRoleToString(role: role),
+                role = roleString,
                 tenantId = tenantId
             }
         };
-        await principalAssignmentResource.UpdateAsync(parameters: principalAssignmentResourceParameters, waitForCompletion: true);
+        await genericResources.CreateOrUpdateAsync(resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters, waitForCompletion: true);
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
