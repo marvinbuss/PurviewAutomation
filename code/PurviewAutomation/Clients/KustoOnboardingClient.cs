@@ -148,7 +148,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         var armClientOptions = new ArmClientOptions();
         this.logger.LogInformation($"Resource Type: {roleAssignmentResourceId.ResourceType}");
         armClientOptions.SetApiVersion(resourceType: roleAssignmentResourceId.ResourceType, apiVersion: "2021-01-01");
-        var armClient = new ArmClient(credential: new DefaultAzureCredential());
+        var armClient = new ArmClient(credential: new DefaultAzureCredential(), options: armClientOptions);
 
         // Get role
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
