@@ -1,5 +1,6 @@
 ﻿using Azure.Analytics.Synapse.AccessControl;
 using Azure.Analytics.Synapse.ManagedPrivateEndpoints;
+using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
@@ -235,6 +236,6 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
 
         await this.AddRoleAssignmentAsync(principalId: principalId, role: SynapseRole.LinkedDataManager);
         await this.AddManagedPrivateEndpointsAsync();
-        await this.purviewAutomationClient.AddRoleAssignmentAsync(principalId: synapse.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: PurviewRole.DataCurator);
+        await this.purviewAutomationClient.AddRoleAssignmentAsync(principalId: synapse.Value.Data.Identity.PrincipalId.ToString(), role: PurviewRole.DataCurator);
     }
 }

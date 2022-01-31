@@ -1,9 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Storage;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace PurviewAutomation.Clients;
 

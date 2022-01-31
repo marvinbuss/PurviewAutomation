@@ -1,4 +1,5 @@
-﻿using Azure.Identity;
+﻿using Azure.Core;
+using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Microsoft.Extensions.Logging;
@@ -141,12 +142,13 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
     {
         // Get resource
         var kusto = await this.GetResourceAsync();
-        var roleAssignmentResourceId = $"{this.resourceId}/principalAssignments/{Guid.NewGuid()}";
+        var roleAssignmentResourceId = new ResourceIdentifier(resourceId: $"{this.resourceId}/principalAssignments/{Guid.NewGuid()}");
 
         // Create client
         var armClientOptions = new ArmClientOptions();
-        armClientOptions.ApiVersions.SetApiVersion(resourceType: new ResourceType(resourceIdOrType: roleAssignmentResourceId), apiVersion: "2021-01-01");
-        var armClient = new ArmClient(credential: new DefaultAzureCredential(), options: armClientOptions);
+        this.logger.LogInformation($"Resource Type: {roleAssignmentResourceId.ResourceType}");
+        armClientOptions.SetApiVersion(resourceType: roleAssignmentResourceId.ResourceType, apiVersion: "2021-01-01");
+        var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get role
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
@@ -160,9 +162,8 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
             break;
         }
 
-        // Create clustr role assignment
-        var resourceGroup = armClient.GetSubscription(id: new ResourceIdentifier($"/subscriptions/{this.resource.SubscriptionId}"));
-        var genericResources = resourceGroup.GetGenericResources();
+        // Create cluster role assignment
+        var genericResources = armClient.GetGenericResources();
         var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
         {
             Properties = new
@@ -173,7 +174,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
                 tenantId = tenantId
             }
         };
-        await genericResources.CreateOrUpdateAsync(resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters, waitForCompletion: true);
+        await genericResources.CreateOrUpdateAsync(waitForCompletion: true, resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters);
     }
 
     public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
@@ -182,9 +183,9 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
 
         if (setupScan)
         {
-            // var purview = await this.purviewAutomationClient.GetResourceAsync();
-            // await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
-            // await this.AddScanAsync(triggerScan: triggerScan);
+            var purview = await this.purviewAutomationClient.GetResourceAsync();
+            await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
+            await this.AddScanAsync(triggerScan: triggerScan);
         }
     }
 }
