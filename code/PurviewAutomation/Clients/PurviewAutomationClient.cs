@@ -182,4 +182,14 @@ internal class PurviewAutomationClient
         var response = await metadataPolicyClient.UpdateMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, content: RequestContent.Create(serializable: metadataPolicyObject));
         this.logger.LogInformation($"Purview collection role assignment response: '{response}'");
     }
+
+    internal async Task CreateManagedPrivateEndpointAsync(string groupId, string resourceId)
+    {
+        var credential = new DefaultAzureCredential();
+        var token = credential.GetTokenAsync(requestContext: new TokenRequestContext(scopes: new string[] { "https://purview.azure.net/.default" }));
+
+        // Get or create Managed Shir
+
+        // Create managed PE
+    }
 }
