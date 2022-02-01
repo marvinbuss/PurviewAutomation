@@ -5,10 +5,14 @@ using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Microsoft.Extensions.Logging;
+using PurviewAutomation.Models.General;
 using PurviewAutomation.Models.Purview;
 using PurviewAutomation.Utility;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -183,13 +187,116 @@ internal class PurviewAutomationClient
         this.logger.LogInformation($"Purview collection role assignment response: '{response}'");
     }
 
-    internal async Task CreateManagedPrivateEndpointAsync(string groupId, string resourceId)
+    internal async Task CreateManagedPrivateEndpointAsync(string name, string groupId, string resourceId)
     {
+        // Get access token
         var credential = new DefaultAzureCredential();
-        var token = credential.GetTokenAsync(requestContext: new TokenRequestContext(scopes: new string[] { "https://purview.azure.net/.default" }));
+        var token = await credential.GetTokenAsync(requestContext: new TokenRequestContext(scopes: new string[] { "https://purview.azure.net/.default" }));
 
-        // Get or create Managed Shir
+        // Create client
+        var client = new HttpClient();
+        client.DefaultRequestHeaders.Accept.Clear();
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+        client.BaseAddress = new Uri(uriString: $"https://{this.resource.Name}.purview.azure.com/proxy/");
 
-        // Create managed PE
+        // Create managed vnet
+        var managedVnet = new
+        {
+            name = "default",
+            properties = new { }
+        };
+        var requestUriManagedVnet = client.BaseAddress.ToString() + $"managedVirtualNetworks/{managedVnet.name}?api-version=2020-12-01-preview";
+        var requestManagedVnet = new HttpRequestMessage(method: HttpMethod.Put, requestUri: requestUriManagedVnet)
+        {
+            Content = new StringContent(content: JsonSerializer.Serialize(managedVnet), encoding: Encoding.UTF8, mediaType: "application/json")
+        };
+        var successManagedVnet = await this.MakeRequestAsync(client: client, request: requestManagedVnet);
+        if (!successManagedVnet)
+        {
+            logger.LogError(message: "Creation of managed virtual network failed.");
+            return;
+        }
+
+        // Get or create managed integration runtime
+        var managedIr = new
+        {
+            name = "default",
+            properties = new
+            {
+                description = "Default Integration Runtime",
+                type = "Managed",
+                typeProperties = new
+                {
+                    computeProperties = new
+                    {
+                        location = "AutoResolve"
+                    }
+                },
+                managedVirtualNetwork = new
+                {
+                    referenceName = "default",
+                    type = "ManagedVirtualNetworkReference"
+                }
+            }
+        };
+        var requestUriManagedIr = client.BaseAddress.ToString() + $"integrationRuntimes/{managedIr.name}?api-version=2020-12-01-preview";
+        var requestManagedIr = new HttpRequestMessage(method: HttpMethod.Put, requestUri: requestUriManagedIr)
+        {
+            Content = new StringContent(content: JsonSerializer.Serialize(managedIr), encoding: Encoding.UTF8, mediaType: "application/json")
+        };
+        var successManagedIr= await this.MakeRequestAsync(client: client, request: requestManagedIr);
+        if (!successManagedIr)
+        {
+            logger.LogError(message: "Creation of managed integration runtime failed.");
+            return;
+        }
+
+        // Create managed private endpoints
+        var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
+        {
+            new ManagedPrivateEndpointDetails{ Name = $"{this.resource.Name}-account", GroupId = "account", ResourceId = this.resourceId },
+            new ManagedPrivateEndpointDetails{ Name = $"{this.resource.Name}-managedBlob", GroupId = "blob", ResourceId = this.managedStorageResourceId },
+            new ManagedPrivateEndpointDetails{ Name = $"{this.resource.Name}-managedQueue", GroupId = "queue", ResourceId = this.managedStorageResourceId },
+            new ManagedPrivateEndpointDetails{ Name = name, GroupId = groupId, ResourceId = resourceId }
+        };
+        foreach (var privateEndpointDetail in privateEndpointDetails)
+        {
+            var managedPrivateEndpoint = new
+            {
+                name = privateEndpointDetail.Name,
+                properties = new
+                {
+                    groupId = privateEndpointDetail.GroupId,
+                    privateLinkResourceId = privateEndpointDetail.ResourceId
+                }
+            };
+            var requestUriManagedPrivateEndpoint = client.BaseAddress.ToString() + $"managedVirtualNetworks/default/managedPrivateEndpoints/{privateEndpointDetail.Name}?api-version=2020-12-01-preview";
+            var requestManagedPrivateEndpoint = new HttpRequestMessage(method: HttpMethod.Put, requestUri: requestUriManagedPrivateEndpoint)
+            {
+                Content = new StringContent(content: JsonSerializer.Serialize(managedPrivateEndpoint), encoding: Encoding.UTF8, mediaType: "application/json")
+            };
+            var successManagedPrivateEndpoint = await this.MakeRequestAsync(client: client, request: requestManagedPrivateEndpoint);
+            if (!successManagedPrivateEndpoint)
+            {
+                logger.LogError(message: $"Creation of managed private endpoint '{privateEndpointDetail.Name}' for resource '{privateEndpointDetail.ResourceId}' and groupId '{privateEndpointDetail.GroupId}' failed.");
+            }
+        }
+    }
+
+    private async Task<bool> MakeRequestAsync(HttpClient client, HttpRequestMessage request)
+    {
+        var response = await client.SendAsync(request: request);
+
+        try
+        {
+            response.EnsureSuccessStatusCode();
+        }
+        catch (Exception ex)
+        {
+            this.logger.LogError(exception: ex, message: "HTTP Request failed");
+            return false;
+        }
+        return true;
     }
 }
