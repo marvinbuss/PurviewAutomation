@@ -54,6 +54,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
                 resourceName = this.resource.Name,
                 endpoint = storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net/",
                 location = storage.Value.Data.Location.ToString(),
+                dataUseGovernance = "Enabled",
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
