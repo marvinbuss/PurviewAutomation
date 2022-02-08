@@ -49,6 +49,7 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     PurviewRootCollectionName: purviewName
     PurviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
     ManagedIntegrationRuntimeName: 'defaultIntegrationRuntime'
+    UseManagedPrivateEndpoints: 'True'
     SetupScan: 'True'
     TriggerScan: 'True'
     SetupLineage: 'True'
