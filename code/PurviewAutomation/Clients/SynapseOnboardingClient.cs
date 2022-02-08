@@ -112,6 +112,10 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
                         scanRulesetName = "AzureSynapseSQL",
                         scanRulesetType = "System"
                     }
+                },
+                connectedVia = string.IsNullOrWhiteSpace(managedIntegrationRuntimeName) ? null : new
+                {
+                    referenceName = managedIntegrationRuntimeName
                 }
             }
         };

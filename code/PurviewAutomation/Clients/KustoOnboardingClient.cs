@@ -93,6 +93,10 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
                 {
                     referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
+                },
+                connectedVia = string.IsNullOrWhiteSpace(managedIntegrationRuntimeName) ? null : new
+                {
+                    referenceName = managedIntegrationRuntimeName
                 }
             }
         };
