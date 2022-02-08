@@ -4,6 +4,6 @@ namespace PurviewAutomation.Clients;
 
 internal interface ILineageOnboardingClient
 {
-    internal Task AddManagedPrivateEndpointsAsync();
+    internal Task AddLineageManagedPrivateEndpointsAsync();
     internal Task OnboardLineageAsync(string principalId);
 }
