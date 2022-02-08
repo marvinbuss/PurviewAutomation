@@ -1,7 +1,7 @@
-﻿using Azure.Identity;
+﻿using Azure.Core;
+using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.Sql;
-using Azure.ResourceManager.Resources;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;

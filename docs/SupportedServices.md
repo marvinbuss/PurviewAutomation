@@ -8,7 +8,7 @@ The table below provides and overview of the currently supported data sources an
 | Azure Synapse Analytics       | :heavy_check_mark:     | :x:                            | :x:                | :heavy_check_mark: |
 | Azure Blob Storage            | :heavy_check_mark:     | :x:                            | :heavy_check_mark: | N/A                |
 | Azure Cosmos DB (SQL API)     | :heavy_check_mark:     | :x:                            | :x:                | N/A                |
-| Azure Data Explorer (Kusto)   | :heavy_check_mark:     | :x:                            | :x:                | N/A                |
+| Azure Data Explorer (Kusto)   | :heavy_check_mark:     | :x:                            | :heavy_check_mark: | N/A                |
 | Azure Data Lake Gen2          | :heavy_check_mark:     | :x:                            | :heavy_check_mark: | N/A                |
 | Azure Database for MySQL      | :heavy_check_mark:     | :x:                            | :x:                | N/A                |
 | Azure Database for PostgreSQL | :heavy_check_mark:     | :x:                            | :x:                | N/A                |

@@ -1,6 +1,7 @@
-﻿using Azure.Identity;
+﻿using Azure.Core;
+using Azure.Identity;
 using Azure.ResourceManager;
-using Azure.ResourceManager.Resources;
+using Azure.ResourceManager.CosmosDB;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -26,13 +27,14 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    private async Task<Azure.Response<DatabaseAccount>> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));
+        return await resourceGroup.GetDatabaseAccounts().GetAsync(accountName: this.resource.Name);
     }
 
     public async Task AddDataSourceAsync()
@@ -68,6 +70,17 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
     public async Task AddScanAsync(bool triggerScan)
     {
         throw new NotImplementedException();
+
+        // Get resource
+        var cosmos = await this.GetResourceAsync();
+
+        // Get cosmos key
+        var primaryKey = cosmos.Value.GetKeys().Value.PrimaryMasterKey;
+
+        // Store key in Key Vault
+
+
+        // Create scan
     }
 
     public async Task RemoveDataSourceAsync()
