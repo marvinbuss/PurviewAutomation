@@ -12,6 +12,7 @@ param storageConnectionStringSecretUri string
 param purviewId string
 param purviewManagedStorageId string
 param purviewManagedEventHubId string
+#disable-next-line no-unused-params
 param purviewRootCollectionName string
 param purviewRootCollectionMetadataPolicyId string
 
@@ -47,6 +48,7 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     PurviewManagedEventHubId: purviewManagedEventHubId
     PurviewRootCollectionName: purviewName
     PurviewRootCollectionMetadataPolicyId: purviewRootCollectionMetadataPolicyId
+    ManagedIntegrationRuntimeName: 'defaultIntegrationRuntime'
     SetupScan: 'True'
     TriggerScan: 'True'
     SetupLineage: 'True'
