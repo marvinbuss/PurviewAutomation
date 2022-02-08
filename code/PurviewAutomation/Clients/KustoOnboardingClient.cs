@@ -132,9 +132,13 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         };
 
         // Create scan
-        if (triggerScan)
+        if (triggerScan && string.IsNullOrWhiteSpace(managedIntegrationRuntimeName))
         {
             await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: filter);
+        }
+        else
+        {
+            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: false, trigger: trigger, filter: filter);
         }
     }
 

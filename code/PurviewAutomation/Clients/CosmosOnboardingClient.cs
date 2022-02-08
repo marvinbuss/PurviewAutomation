@@ -83,10 +83,8 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
         // Get cosmos key
         var primaryKey = cosmos.Value.GetKeys().Value.PrimaryMasterKey;
 
-        // Store key in Key Vault
-
-
-        // Create scan
+        // TODO: Store key in Key Vault
+        // TODO: Create scan
     }
 
     public async Task RemoveDataSourceAsync()

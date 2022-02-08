@@ -194,12 +194,12 @@ internal class PurviewAutomationClient
         // Get access token
         var credential = new DefaultAzureCredential();
         var token = await credential.GetTokenAsync(requestContext: new TokenRequestContext(scopes: new string[] { "https://purview.azure.net/.default" }));
-
+        
         // Create client
         var client = new HttpClient();
         client.DefaultRequestHeaders.Accept.Clear();
         client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token);
+        client.DefaultRequestHeaders.Add("Authorization", "Bearer " + token.Token);
         client.BaseAddress = new Uri(uriString: $"https://{this.resource.Name}.purview.azure.com/proxy/");
 
         // Create managed vnet

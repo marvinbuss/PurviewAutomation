@@ -144,9 +144,13 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         // Filters are already included in the scan object
 
         // Create scan
-        if (triggerScan)
+        if (triggerScan && string.IsNullOrWhiteSpace(managedIntegrationRuntimeName))
         {
             await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: null);
+        }
+        else
+        {
+            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: false, trigger: trigger, filter: null);
         }
     }
 
