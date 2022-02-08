@@ -68,19 +68,13 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task<string> AddManagedPrivateEndpointAsync()
+    public async Task<string> AddScanningManagedPrivateEndpointsAsync()
     {
-        throw new NotSupportedException();
+        return null;
     }
 
-    public async Task AddScanAsync(bool setupManagedPrivateEndpoints, bool triggerScan)
+    public async Task AddScanAsync(bool triggerScan, string managedIntegrationRuntimeName)
     {
-        if (setupManagedPrivateEndpoints)
-        {
-            // Create managed private endpoints
-            var managedIrName = await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sql", resourceId: this.resourceId);
-        }
-
         // Get resource
         var kusto = await this.GetResourceAsync();
 
@@ -189,20 +183,20 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         await genericResources.CreateOrUpdateAsync(waitForCompletion: true, resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupManagedPrivateEndpoints, bool setupScan, bool triggerScan)
+    public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan, bool triggerScan)
     {
         await this.AddDataSourceAsync();
 
-        var managedIntegrationRuntimeName = string.Empty;
-        if (setupManagedPrivateEndpoints)
+        string managedIntegrationRuntimeName = null;
+        if (useManagedPrivateEndpoints)
         {
-            // managedIntegrationRuntimeName = await this.AddManagedPrivateEndpointAsync();
+            // managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
         }
         if (setupScan)
         {
             var purview = await this.purviewAutomationClient.GetResourceAsync();
             await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
-            await this.AddScanAsync(triggerScan: triggerScan);
+            await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
 }

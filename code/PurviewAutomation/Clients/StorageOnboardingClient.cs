@@ -68,23 +68,25 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task AddManagedPrivateEndpointAsync()
+    public async Task<string> AddScanningManagedPrivateEndpointsAsync()
     {
         // Get resource
         var storage = await this.GetResourceAsync();
 
         // Create managed private endpoints
+        string managedIntegrationRuntimeName;
         if (storage.Value.Data.IsHnsEnabled.Equals(true))
         {
-            await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "dfs", resourceId: this.resourceId);
+            managedIntegrationRuntimeName = await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "dfs", resourceId: this.resourceId);
         }
         else
         {
-            await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "blob", resourceId: this.resourceId);
+            managedIntegrationRuntimeName = await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "blob", resourceId: this.resourceId);
         }
+        return managedIntegrationRuntimeName;
     }
 
-    public async Task AddScanAsync(bool triggerScan = true)
+    public async Task AddScanAsync(bool triggerScan, string managedIntegrationRuntimeName)
     {
         // Get resource
         var storage = await this.GetResourceAsync();
@@ -103,6 +105,10 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
                 {
                     referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
+                },
+                connectedVia = string.IsNullOrWhiteSpace(managedIntegrationRuntimeName) ? null : new
+                {
+                    referenceName = managedIntegrationRuntimeName
                 }
             }
         };
@@ -154,17 +160,18 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupManagedPrivateEndpoints, bool setupScan = true, bool triggerScan = true)
+    public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan = true, bool triggerScan = true)
     {
         await this.AddDataSourceAsync();
 
-        if (setupManagedPrivateEndpoints)
+        string managedIntegrationRuntimeName = null;
+        if (useManagedPrivateEndpoints)
         {
-            await this.AddManagedPrivateEndpointAsync();
+            managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
         }
         if (setupScan)
         {
-            await this.AddScanAsync(triggerScan: triggerScan);
+            await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
 }

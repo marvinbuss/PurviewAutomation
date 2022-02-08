@@ -62,7 +62,7 @@ internal class SqlServerOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task<string> AddManagedPrivateEndpointAsync()
+    public async Task<string> AddScanningManagedPrivateEndpointsAsync()
     {
         // Create managed private endpoints
         return await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sqlServer", resourceId: this.resourceId);
@@ -79,14 +79,14 @@ internal class SqlServerOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupManagedPrivateEndpoints, bool setupScan, bool triggerScan)
+    public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan, bool triggerScan)
     {
         await this.AddDataSourceAsync();
 
         var managedIntegrationRuntimeName = string.Empty;
-        if (setupManagedPrivateEndpoints)
+        if (useManagedPrivateEndpoints)
         {
-            managedIntegrationRuntimeName = await this.AddManagedPrivateEndpointAsync();
+            managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
         }
         if (setupScan)
         {

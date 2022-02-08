@@ -29,9 +29,10 @@ internal class PurviewAutomationClient
     private readonly string scanEndpoint;
     private readonly string rootCollectionName;
     private readonly string rootCollectionPolicyId;
+    public readonly string managedIntegrationRuntimeName;
     private readonly ILogger logger;
 
-    internal PurviewAutomationClient(string resourceId, string managedStorageResourceId, string managedEventHubId, string rootCollectionName, string rootCollectionPolicyId, ILogger logger)
+    internal PurviewAutomationClient(string resourceId, string managedStorageResourceId, string managedEventHubId, string rootCollectionName, string rootCollectionPolicyId, string managedIntegrationRuntimeName, ILogger logger)
     {
         if (resourceId.Split(separator: "/").Length != 9 ||
             managedStorageResourceId.Split(separator: "/").Length != 9 ||
@@ -49,6 +50,7 @@ internal class PurviewAutomationClient
         this.rootCollectionName = rootCollectionName;
         this.rootCollectionPolicyId = rootCollectionPolicyId;
         this.logger = logger;
+        this.managedIntegrationRuntimeName = managedIntegrationRuntimeName;
     }
 
     public async Task<Azure.Response<GenericResource>> GetResourceAsync()
@@ -221,7 +223,7 @@ internal class PurviewAutomationClient
         // Get or create managed integration runtime
         var managedIr = new
         {
-            name = "default",
+            name = this.managedIntegrationRuntimeName,
             properties = new
             {
                 description = "Default Integration Runtime",

@@ -73,15 +73,15 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task AddManagedPrivateEndpointAsync()
+    public async Task<string> AddScanningManagedPrivateEndpointsAsync()
     {
         // Create managed private endpoints
         await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sqlServer", resourceId: this.resourceId);
         await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sql", resourceId: this.resourceId);
-        await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sqlOnDemand", resourceId: this.resourceId);
+        return await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sqlOnDemand", resourceId: this.resourceId);
     }
 
-    public async Task AddScanAsync(bool triggerScan = true)
+    public async Task AddScanAsync(bool triggerScan, string managedIntegrationRuntimeName)
     {
         // Get resource
         var synapse = await this.GetResourceAsync();
@@ -156,7 +156,7 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
-    public async Task AddManagedPrivateEndpointsAsync()
+    public async Task AddLineageManagedPrivateEndpointsAsync()
     {
         // Create client
         var managedPrivateEndpointsClient = new ManagedPrivateEndpointsClient(endpoint: new Uri(uriString: $"https://{this.resource.Name}.dev.azuresynapse.net"), credential: new DefaultAzureCredential());
@@ -226,14 +226,20 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         }
     }
 
-    public async Task OnboardDataSourceAsync(bool setupManagedPrivateEndpoints, bool setupScan = true, bool triggerScan = true)
+    public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan = true, bool triggerScan = true)
     {
         await this.AddDataSourceAsync();
 
+
+        string managedIntegrationRuntimeName = null;
+        if (useManagedPrivateEndpoints)
+        {
+            managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
+        }
         if (setupScan)
         {
             // await this.AddSqlPurviewLoginAsync();
-            // await this.AddScanAsync(triggerScan: triggerScan);
+            // await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
 
@@ -243,7 +249,7 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         var synapse = await this.GetResourceAsync();
 
         await this.AddRoleAssignmentAsync(principalId: principalId, role: SynapseRole.LinkedDataManager);
-        await this.AddManagedPrivateEndpointsAsync();
+        await this.AddLineageManagedPrivateEndpointsAsync();
         await this.purviewAutomationClient.AddRoleAssignmentAsync(principalId: synapse.Value.Data.Identity.PrincipalId.ToString(), role: PurviewRole.DataCurator);
     }
 }
