@@ -5,6 +5,7 @@ using Azure.ResourceManager.Resources;
 using Microsoft.Extensions.Logging;
 using PurviewAutomation.Models.General;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace PurviewAutomation.Clients;
@@ -166,12 +167,12 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         var genericResources = armClient.GetGenericResources();
         var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
         {
-            Properties = new
+            Properties = new Dictionary<string, object>()
             {
-                principalId = principalId,
-                principalType = "App",
-                role = roleString,
-                tenantId = tenantId
+                { "principalId", principalId },
+                { "principalType", "App" },
+                { "role", roleString },
+                { "tenantId", tenantId }
             }
         };
         await genericResources.CreateOrUpdateAsync(waitForCompletion: true, resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters);
