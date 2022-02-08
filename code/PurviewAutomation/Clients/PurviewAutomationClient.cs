@@ -194,7 +194,7 @@ internal class PurviewAutomationClient
         // Get access token
         var credential = new DefaultAzureCredential();
         var token = await credential.GetTokenAsync(requestContext: new TokenRequestContext(scopes: new string[] { "https://purview.azure.net/.default" }));
-        
+
         // Create client
         var client = new HttpClient();
         client.DefaultRequestHeaders.Accept.Clear();
@@ -247,7 +247,7 @@ internal class PurviewAutomationClient
         {
             Content = new StringContent(content: JsonSerializer.Serialize(managedIr), encoding: Encoding.UTF8, mediaType: "application/json")
         };
-        var successManagedIr= await this.MakeRequestAsync(client: client, request: requestManagedIr);
+        var successManagedIr = await this.MakeRequestAsync(client: client, request: requestManagedIr);
         if (!successManagedIr)
         {
             logger.LogError(message: "Creation of managed integration runtime failed.");
