@@ -42,12 +42,13 @@ public static class PurviewAutomation
         var triggerScan = Convert.ToBoolean(GetEnvironmentVariable(name: "TriggerScan"));
         var setupLineage = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupLineage"));
         var removeDataSources = Convert.ToBoolean(GetEnvironmentVariable(name: "RemoveDataSources"));
+        var setupManagedPrivateEndpoints = Convert.ToBoolean(GetEnvironmentVariable(name: "SetupManagedPrivateEndpoints"));
 
         switch (eventDetails.Operation)
         {
             case "write":
                 log.LogInformation($"Write opreation detected");
-                await AddDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, setupScan: setupScan, triggerScan: triggerScan, setupLineage: setupLineage, functionPrincipalId: functionPrincipalId, logger: log);
+                await AddDataSourceAsync(eventDetails: eventDetails, purviewAutomationClient: purviewAutomationClient, setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan, setupLineage: setupLineage, functionPrincipalId: functionPrincipalId, logger: log);
                 break;
             case "delete":
                 log.LogInformation($"Delete operation detected");
@@ -97,19 +98,19 @@ public static class PurviewAutomation
     /// <param name="functionPrincipalId">Principal ID of the function.</param>
     /// <param name="logger">Object for logging.</param>
     /// <returns></returns>
-    private static async Task AddDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, bool setupScan, bool triggerScan, bool setupLineage, string functionPrincipalId, ILogger logger)
+    private static async Task AddDataSourceAsync(EventDetails eventDetails, PurviewAutomationClient purviewAutomationClient, bool setupManagedPrivateEndpoints, bool setupScan, bool triggerScan, bool setupLineage, string functionPrincipalId, ILogger logger)
     {
         if (eventDetails.Action == "microsoft.storage/storageaccounts/write")
         {
             logger.LogInformation("Storage Account creation detected");
             var storageOnboardingClient = new StorageOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-            await storageOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            await storageOnboardingClient.OnboardDataSourceAsync(setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan);
         }
         else if (eventDetails.Action == "microsoft.synapse/workspaces/write")
         {
             logger.LogInformation("Synapse Workspace creation detected");
             var synapseOnboardingClient = new SynapseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-            await synapseOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            await synapseOnboardingClient.OnboardDataSourceAsync(setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan);
 
             if (setupLineage)
             {
@@ -120,25 +121,25 @@ public static class PurviewAutomation
         {
             logger.LogInformation("Kusto Cluster creation detected");
             var kustoOnboardingClient = new KustoOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-            await kustoOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            await kustoOnboardingClient.OnboardDataSourceAsync(setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan);
         }
         else if (eventDetails.Action == "microsoft.documentdb/databaseaccounts/write")
         {
             logger.LogInformation("Cosmos DB creation detected");
             var cosmosOnboardingClient = new CosmosOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-            await cosmosOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            await cosmosOnboardingClient.OnboardDataSourceAsync(setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan);
         }
         else if (eventDetails.Action == "microsoft.sql/servers/write")
         {
             logger.LogInformation("SQL Server creation detected");
             var sqlServerOnboardingClient = new SqlServerOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-            await sqlServerOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            await sqlServerOnboardingClient.OnboardDataSourceAsync(setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan);
         }
         else if (eventDetails.Action == "microsoft.sql/servers/databases/write")
         {
             logger.LogInformation("SQL Database creation detected");
             var sqlDatabaseOnboardingClient = new SqlDatabaseOnboardingClient(resourceId: eventDetails.Scope, client: purviewAutomationClient, logger: logger);
-            await sqlDatabaseOnboardingClient.OnboardDataSourceAsync(setupScan: setupScan, triggerScan: triggerScan);
+            await sqlDatabaseOnboardingClient.OnboardDataSourceAsync(setupManagedPrivateEndpoints: setupManagedPrivateEndpoints, setupScan: setupScan, triggerScan: triggerScan);
         }
         else
         {

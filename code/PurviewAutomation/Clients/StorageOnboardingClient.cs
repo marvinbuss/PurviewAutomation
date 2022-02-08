@@ -26,7 +26,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<StorageAccount>> GetStorageAsync()
+    private async Task<Azure.Response<StorageAccount>> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
@@ -39,7 +39,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
     public async Task AddDataSourceAsync()
     {
         // Get resource
-        var storage = await this.GetStorageAsync();
+        var storage = await this.GetResourceAsync();
 
         // Create data source
         var dataSource = new
@@ -67,10 +67,26 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
+    public async Task AddManagedPrivateEndpointAsync()
+    {
+        // Get resource
+        var storage = await this.GetResourceAsync();
+
+        // Create managed private endpoints
+        if (storage.Value.Data.IsHnsEnabled.Equals(true))
+        {
+            await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "dfs", resourceId: this.resourceId);
+        }
+        else
+        {
+            await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "blob", resourceId: this.resourceId);
+        }
+    }
+
     public async Task AddScanAsync(bool triggerScan = true)
     {
         // Get resource
-        var storage = await this.GetStorageAsync();
+        var storage = await this.GetResourceAsync();
 
         // Create scan
         var scanName = "default";
@@ -137,10 +153,14 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupScan = true, bool triggerScan = true)
+    public async Task OnboardDataSourceAsync(bool setupManagedPrivateEndpoints, bool setupScan = true, bool triggerScan = true)
     {
         await this.AddDataSourceAsync();
 
+        if (setupManagedPrivateEndpoints)
+        {
+            await this.AddManagedPrivateEndpointAsync();
+        }
         if (setupScan)
         {
             await this.AddScanAsync(triggerScan: triggerScan);

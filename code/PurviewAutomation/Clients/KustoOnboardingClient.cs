@@ -66,8 +66,19 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task AddScanAsync(bool triggerScan)
+    public async Task<string> AddManagedPrivateEndpointAsync()
     {
+        throw new NotSupportedException();
+    }
+
+    public async Task AddScanAsync(bool setupManagedPrivateEndpoints, bool triggerScan)
+    {
+        if (setupManagedPrivateEndpoints)
+        {
+            // Create managed private endpoints
+            var managedIrName = await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "sql", resourceId: this.resourceId);
+        }
+
         // Get resource
         var kusto = await this.GetResourceAsync();
 
@@ -175,15 +186,20 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         await principalAssignmentResource.UpdateAsync(parameters: principalAssignmentResourceParameters, waitForCompletion: true);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
+    public async Task OnboardDataSourceAsync(bool setupManagedPrivateEndpoints, bool setupScan, bool triggerScan)
     {
         await this.AddDataSourceAsync();
 
+        var managedIntegrationRuntimeName = string.Empty;
+        if (setupManagedPrivateEndpoints)
+        {
+            // managedIntegrationRuntimeName = await this.AddManagedPrivateEndpointAsync();
+        }
         if (setupScan)
         {
             // var purview = await this.purviewAutomationClient.GetResourceAsync();
             // await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.SystemAssignedIdentity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
-            // await this.AddScanAsync(triggerScan: triggerScan);
+            // await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
 }

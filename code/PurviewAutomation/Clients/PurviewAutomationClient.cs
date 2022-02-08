@@ -187,7 +187,7 @@ internal class PurviewAutomationClient
         this.logger.LogInformation($"Purview collection role assignment response: '{response}'");
     }
 
-    internal async Task CreateManagedPrivateEndpointAsync(string name, string groupId, string resourceId)
+    internal async Task<string> CreateManagedPrivateEndpointAsync(string name, string groupId, string resourceId)
     {
         // Get access token
         var credential = new DefaultAzureCredential();
@@ -215,7 +215,7 @@ internal class PurviewAutomationClient
         if (!successManagedVnet)
         {
             logger.LogError(message: "Creation of managed virtual network failed.");
-            return;
+            return null;
         }
 
         // Get or create managed integration runtime
@@ -249,10 +249,11 @@ internal class PurviewAutomationClient
         if (!successManagedIr)
         {
             logger.LogError(message: "Creation of managed integration runtime failed.");
-            return;
+            return null;
         }
 
         // Create managed private endpoints
+        var successesManagedPrivateEndpoint = new List<bool>();
         var privateEndpointDetails = new List<ManagedPrivateEndpointDetails>
         {
             new ManagedPrivateEndpointDetails{ Name = $"{this.resource.Name}-account", GroupId = "account", ResourceId = this.resourceId },
@@ -280,8 +281,18 @@ internal class PurviewAutomationClient
             if (!successManagedPrivateEndpoint)
             {
                 logger.LogError(message: $"Creation of managed private endpoint '{privateEndpointDetail.Name}' for resource '{privateEndpointDetail.ResourceId}' and groupId '{privateEndpointDetail.GroupId}' failed.");
+                successesManagedPrivateEndpoint.Add(item: false);
+            }
+            else
+            {
+                successesManagedPrivateEndpoint.Add(item: true);
             }
         }
+        if (successesManagedPrivateEndpoint.TrueForAll(match: b => b))
+        {
+            return managedIr.name;
+        }
+        return null;
     }
 
     private async Task<bool> MakeRequestAsync(HttpClient client, HttpRequestMessage request)
