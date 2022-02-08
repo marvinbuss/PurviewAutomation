@@ -34,7 +34,7 @@ public static class PurviewAutomation
             managedEventHubId: GetEnvironmentVariable(name: "PurviewManagedEventHubId"),
             rootCollectionName: GetEnvironmentVariable(name: "PurviewRootCollectionName"),
             rootCollectionPolicyId: GetEnvironmentVariable(name: "PurviewRootCollectionMetadataPolicyId"),
-            managedIntegrationRuntimeName: GetEnvironmentVariable(name: GetEnvironmentVariable(name: "ManagedIntegrationRuntimeName")),
+            managedIntegrationRuntimeName: GetEnvironmentVariable(name: "ManagedIntegrationRuntimeName"),
             logger: log);
 
         // Get application settings
