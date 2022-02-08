@@ -68,7 +68,12 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task AddScanAsync(bool triggerScan)
+    public async Task<string> AddScanningManagedPrivateEndpointsAsync()
+    {
+        return null;
+    }
+
+    public async Task AddScanAsync(bool triggerScan, string managedIntegrationRuntimeName)
     {
         // Get resource
         var kusto = await this.GetResourceAsync();
@@ -88,6 +93,10 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
                 {
                     referenceName = this.resource.ResourceGroupName,
                     type = "CollectionReference"
+                },
+                connectedVia = string.IsNullOrWhiteSpace(managedIntegrationRuntimeName) ? null : new
+                {
+                    referenceName = managedIntegrationRuntimeName
                 }
             }
         };
@@ -127,9 +136,13 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         };
 
         // Create scan
-        if (triggerScan)
+        if (triggerScan && string.IsNullOrWhiteSpace(managedIntegrationRuntimeName))
         {
             await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: true, trigger: trigger, filter: filter);
+        }
+        else
+        {
+            await this.purviewAutomationClient.AddScanAsync(dataSourceName: this.resource.Name, scan: scan, scanName: scanName, runScan: false, trigger: trigger, filter: filter);
         }
     }
 
@@ -178,15 +191,20 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         await genericResources.CreateOrUpdateAsync(waitForCompletion: true, resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
+    public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan, bool triggerScan)
     {
         await this.AddDataSourceAsync();
 
+        string managedIntegrationRuntimeName = null;
+        if (useManagedPrivateEndpoints)
+        {
+            // managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
+        }
         if (setupScan)
         {
             var purview = await this.purviewAutomationClient.GetResourceAsync();
             await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
-            await this.AddScanAsync(triggerScan: triggerScan);
+            await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
 }

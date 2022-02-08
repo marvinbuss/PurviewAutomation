@@ -78,7 +78,12 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
     }
 
-    public async Task AddScanAsync(bool triggerScan)
+    public async Task<string> AddScanningManagedPrivateEndpointsAsync()
+    {
+        return null;
+    }
+
+    public async Task AddScanAsync(bool triggerScan, string managedIntegrationRuntimeName)
     {
         throw new NotImplementedException();
     }
@@ -89,13 +94,18 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
         await this.purviewAutomationClient.RemoveDataSourceAsync(dataSourceName: this.resource.Name);
     }
 
-    public async Task OnboardDataSourceAsync(bool setupScan, bool triggerScan)
+    public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan, bool triggerScan)
     {
         await this.AddDataSourceAsync();
 
+        string managedIntegrationRuntimeName = null;
+        if (useManagedPrivateEndpoints)
+        {
+            // managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
+        }
         if (setupScan)
         {
-            // await this.AddScanAsync(triggerScan: triggerScan);
+            // await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
 }
