@@ -2,6 +2,16 @@
 
 Please follow the guide below to deploy the solution into your own tenant and subscription. 
 
+## 0. Prerequisites
+
+### Supported regions
+
+The solution supports the following Azure regions:
+- Canada Central
+- North Europe
+- West Europe
+- ...
+
 ## 1. Fork the repository
 
 First, you must fork this repository. To do so, please follow the steps below:
@@ -103,4 +113,58 @@ In the previous step, you have created Service Principal credentials which will 
     ```
 7. Click **Add secret**.
 
-## 4. 
+## 4. Update parameters
+
+In order to deploy the Infrastructure as Code (IaC) templates to the desired Azure subscription, you will need to modify some parameters in the forked repository. Therefore, **this step should not be skipped**. There are two files that require updates:
+
+- `.github/workflows/deploy.yml` and
+- `infra/params.json`.
+
+Update these files in a separate branch and then merge via Pull Request to trigger the initial deployment.  Follow the steps beow to successfully update the parameters:
+
+1. Open [.github/workflows/deploy.yml](/.github/workflows/deploy.yml).
+2. Update `AZURE_SUBSCRIPTION_ID` and `AZURE_LOCATION` in the environment variables section:
+
+    ```yaml
+    env:
+        DOTNET_VERSION: "6.0.x"
+        WORKING_DIRECTORY: "code/"
+        AZURE_SUBSCRIPTION_ID: "4060c03e-0d2e-44b7-82a3-da9376fe50b2"  # Update to '<your-subscription_id>'
+        AZURE_LOCATION: "northeurope"                                  # Update to '<your-azure-region>'
+    ```
+
+    | Parameter                     | Description  | Sample value |
+    |:------------------------------|:-------------|:-------------|
+    | **AZURE_SUBSCRIPTION_ID**     | Specifies the subscription ID where all the resources will be deployed | <div style="width: 36ch">`xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`</div> |
+    | **AZURE_LOCATION**            | Specifies the region where you want the resources to be deployed. Please check [Supported Regions](#supported-regions) | `northeurope` |
+
+3. Commit the changes.
+4. Open [infra/params.json](/infra/params.json).
+5. Update the variable values in this file. More details for each parameter can be found below:
+
+    | Parameter                                | Description  | Sample value |
+    |:-----------------------------------------|:-------------|:-------------|
+    | `location` | Specifies the location for all resources. | `northeurope` |
+    | `environment` | Specifies the environment of the deployment. | `dev`, `tst` or `prd` |
+    | `prefix` | Specifies the prefix for all resources created in this deployment. | `prefi` |
+    | `tags` | Specifies the tags that you want to apply to all resources. | {`key`: `value`} |
+    | `purviewId` | Specifies the Resource ID of the central Purview instance. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Purview/accounts/{purview-name}` |
+    | `purviewRootCollectionName` | Specifies the name of the root collection of the Purview account. | `dmz-dev-purview001` |
+    | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy id of the Purview account. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
+    | `purviewManagedStorageId` | Specifies the Resource ID of the managed storage of the central purview instance. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Storage/storageAccounts/{storage-account-name}` |
+    | `purviewManagedEventHubId` | Specifies the Resource ID of the managed event hub of the central purview instance. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.EventHub/namespaces/{eventhub-namespace-name}` |
+    | `eventGridTopicSourceSubscriptions` | Specifies ... | `` |
+    | `createEventSubscription` | Specifies whether ... should be created. | `false` |
+    | `subnetId` | Specifies the Resource ID of the subnet to which all private endpoints will connect. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/virtualNetworks/{vnet-name}/subnets/{subnet-name}` |
+    | `functionSubnetId` | Specifies the Resource ID of the subnet to which the function will be injected. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/virtualNetworks/{vnet-name}/subnets/{subnet-name}` |
+    | `privateDnsZoneIdBlob` | Specifies the Resource ID of the private DNS zone for Blob Storage. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net` |
+    | `privateDnsZoneIdFile` | Specifies the Resource ID of the private DNS zone for File Storage. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net` |
+    | `privateDnsZoneIdKeyVault` | Specifies the Resource ID of the private DNS zone for KeyVault. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net` |
+
+6. Commit the changes.
+7. Merge the changes into the `main` branch of your repository.
+8. Follow the workflow deployment.
+
+## 5. Post-deployment steps
+
+TODO
