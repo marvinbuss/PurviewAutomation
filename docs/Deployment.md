@@ -194,18 +194,18 @@ Update these files in a separate branch and then merge via Pull Request to trigg
     | `environment` | Specifies the environment of the deployment. | `dev`, `tst` or `prd` |
     | `prefix` | Specifies the prefix for all resources created in this deployment. | `prefi` |
     | `tags` | Specifies the tags that you want to apply to all resources. | {`key`: `value`} |
-    | `purviewId` | Specifies the Resource ID of the central Purview instance. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Purview/accounts/{purview-name}` |
-    | `purviewRootCollectionName` | Specifies the name of the root collection of the Purview account. | `dmz-dev-purview001` |
+    | `purviewId` | Specifies the Resource ID of the central Purview instance. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Purview/accounts/<your-purview-name>` |
+    | `purviewRootCollectionName` | Specifies the name of the root collection of the Purview account. By default, the name is equal to your Purview account. | `dmz-dev-purview001` |
     | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy id of the Purview account. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
-    | `purviewManagedStorageId` | Specifies the Resource ID of the managed storage of the central purview instance. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Storage/storageAccounts/{storage-account-name}` |
-    | `purviewManagedEventHubId` | Specifies the Resource ID of the managed event hub of the central purview instance. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.EventHub/namespaces/{eventhub-namespace-name}` |
-    | `eventGridTopicSourceSubscriptions` | Specifies ... | `` |
+    | `purviewManagedStorageId` | Specifies the Resource ID of the managed storage of the central purview instance. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Storage/storageAccounts/<your-storage-account-name>` |
+    | `purviewManagedEventHubId` | Specifies the Resource ID of the managed event hub of the central purview instance. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.EventHub/namespaces/<your-eventhub-namespace-name>` |
+    | `eventGridTopicSourceSubscriptions` | Specifies ... | `[{"subscriptionId": "<your-subscription-id>", "location": "<your-azure-location>"}]` |
     | `createEventSubscription` | Specifies whether ... should be created. | `false` |
-    | `subnetId` | Specifies the Resource ID of the subnet to which all private endpoints will connect. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/virtualNetworks/{vnet-name}/subnets/{subnet-name}` |
-    | `functionSubnetId` | Specifies the Resource ID of the subnet to which the function will be injected. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/virtualNetworks/{vnet-name}/subnets/{subnet-name}` |
-    | `privateDnsZoneIdBlob` | Specifies the Resource ID of the private DNS zone for Blob Storage. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net` |
-    | `privateDnsZoneIdFile` | Specifies the Resource ID of the private DNS zone for File Storage. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net` |
-    | `privateDnsZoneIdKeyVault` | Specifies the Resource ID of the private DNS zone for KeyVault. | `/subscriptions/{subscription-id}/resourceGroups/{rg-name}/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net` |
+    | `subnetId` | Specifies the Resource ID of the subnet to which all private endpoints will connect. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/virtualNetworks/<your-vnet-name>/subnets/<your-subnet-name>` |
+    | `functionSubnetId` | Specifies the Resource ID of the subnet to which the function will be injected. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/virtualNetworks/<your-vnet-name>/subnets/<your-subnet-name>` |
+    | `privateDnsZoneIdBlob` | Specifies the Resource ID of the private DNS zone for Blob Storage. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net` |
+    | `privateDnsZoneIdFile` | Specifies the Resource ID of the private DNS zone for File Storage. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net` |
+    | `privateDnsZoneIdKeyVault` | Specifies the Resource ID of the private DNS zone for KeyVault. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net` |
 
 6. Commit the changes.
 7. Merge the changes into the `main` branch of your repository.
