@@ -4,13 +4,61 @@ Please follow the guide below to deploy the solution into your own tenant and su
 
 ## 0. Prerequisites
 
+Before getting started with the deployment, please review the prerequisites.
+
 ### Supported regions
 
 The solution supports the following Azure regions:
-- Canada Central
-- North Europe
-- West Europe
-- ...
+
+- (Asia Pacific) Australia East
+- (Canada) Canada Central
+- (US) East US
+- (US) East US 2
+- (Europe) North Europe
+- (Europe) West Europe
+- (more to follow over the next weeks as [Microsoft Purview expands the supported regions for managed Vnets](https://docs.microsoft.com/en-us/azure/purview/catalog-managed-vnet#supported-regions))
+
+### Required for this solution
+
+The following must be available to deploy the solution inside your Azure environment:
+
+- An Azure subscription. If you don't have an Azure subscription, [create your Azure free account today](https://azure.microsoft.com/free/).
+- [User Access Administrator](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator) or [Owner](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner) access to the subscription to be able to create a service principal and role assignments for it.
+- For the deployment, please choose one of the **Supported Regions**.
+- It is also expected that a few resources have been deployed upfront. This includes:
+    - A Vnet with two subnets, whereas one needs to have `privateEndpointNetworkPolicies` disabled and the other one needs to be delegated to `Microsoft.Web/serverFarms`.
+    - An Azure Purview account in one of the supported regions.
+    - Private DNS Zones for blob storage, file storage, and key vault.
+
+### (Optional) Deployment of required services
+
+If the services mentioend previously have not been deployed upfront, you can also find a [bicep template and parameter file here](/docs/reference/prerequisites), which you can use to get your environment ready for the deployment of the Purview Automation solution. To deploy the setup, please execute the following steps:
+
+1. Open [/docs/reference/prerequisites/params.json](/docs/reference/prerequisites/params.json) and update at least the prefix value, which will be used as a prefix for all the resources that are getting deployed.
+2. Now, open your terminal and navigate to the location of these templates.
+3. Run either of the following commands to deploy the setup inside your subscription:
+
+    **Azure CLI:**
+
+    ```sh
+    az deployment sub create \
+        --location "northeurope" \
+        --template-file "main.bicep" \
+        --template-file "params.json"
+    ```
+
+    **Azure PowerShell:**
+
+    ```powershell
+    New-AzSubscriptionDeployment `
+        -Location "northeurope" `
+        -TemplateFile "main.bicep" `
+        -TemplateParameterFile "params.json"
+    ```
+
+4. Take note of the outputs of this deployment. The deployment provides output for all parameters that are required for subsequent steps.
+
+Now, we can start with the deployment of teh actual solution.
 
 ## 1. Fork the repository
 
@@ -26,12 +74,12 @@ First, you must fork this repository. To do so, please follow the steps below:
 
 ## 2. Create Service Principal
 
-A service principal with *Contributor* and *User Access Administrator* rights needs to be generated for authentication and authorization from GitHubto your Azure subscription. This is required to deploy resources to your environment. Follow the steps below to create a Service Principle:
+A service principal with *Contributor* and *User Access Administrator* rights on the subscription level needs to be generated for authentication and authorization from GitHub to your Azure subscription. This is required to deploy resources to your environment. Follow the steps below to create a Service Principle:
 
 1. Go to the Azure Portal to find the ID of your subscription.
-2. Start the Cloud Shell and login to Azure using `az login` when using Azure CLI or `Connect-AzAccount` when using Azure PowerShell.
-3. Set the Azure context using `az account set --subscription "<your-subscription-id>"` when using Azure CLI or `Set-AzContext -Subscription "<your-subscription-id>"` when using Azure PowerShell.
-4. Execute the following commands using Azure CLI to generate the required Service Pirncipal credentials:
+2. Start the Cloud Shell or open your Terminal and login to Azure using the following Azure CLI command: `az login`.
+3. Set the Azure context using `az account set --subscription "<your-subscription-id>"`.
+4. Execute the following command using Azure CLI to generate the required Service Principal credentials:
 
     **Azure CLI:**
 
@@ -70,8 +118,7 @@ A service principal with *Contributor* and *User Access Administrator* rights ne
         --query "[].{objectId:objectId}" \
         --output tsv
 
-    # Replace <your-service-principal-name> and <your-subscription-id> with your
-    # Azure subscription id and any name for your service principal.
+    # Assign the User Access Administrator role.
     az role assignment create \
         --assignee "<your-service-principle-object-id>" \
         --role "User Access Administrator" \
@@ -84,8 +131,7 @@ A service principal with *Contributor* and *User Access Administrator* rights ne
     # Get Service Principal Object ID
     $spObjectId = (Get-AzADServicePrincipal -DisplayName "<your-service-principal-name>").id
 
-    # Add role assignment
-    # For Resource Scope level assignment
+    # Assign the User Access Administrator role.
     New-AzRoleAssignment `
         -ObjectId $spObjectId `
         -RoleDefinitionName "User Access Administrator" `
@@ -120,7 +166,7 @@ In order to deploy the Infrastructure as Code (IaC) templates to the desired Azu
 - `.github/workflows/deploy.yml` and
 - `infra/params.json`.
 
-Update these files in a separate branch and then merge via Pull Request to trigger the initial deployment.  Follow the steps beow to successfully update the parameters:
+Update these files in a separate branch and then merge via Pull Request to trigger the initial deployment.  Follow the steps below to successfully update the parameters:
 
 1. Open [.github/workflows/deploy.yml](/.github/workflows/deploy.yml).
 2. Update `AZURE_SUBSCRIPTION_ID` and `AZURE_LOCATION` in the environment variables section:
