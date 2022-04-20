@@ -7,10 +7,9 @@ targetScope = 'resourceGroup'
 param location string
 param prefix string
 param tags object
-param vnetAddressPrefix string = '10.0.0.0/16'
+param vnetAddressPrefix string = '10.0.0.0/24'
 param servicesSubnetAddressPrefix string = '10.0.0.0/27'
 param functionSubnetAddressPrefix string = '10.0.0.32/27'
-param dnsServers array
 
 // Variables
 var servicesSubnetName = 'ServicesSubnet'
@@ -47,9 +46,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
       addressPrefixes: [
         vnetAddressPrefix
       ]
-    }
-    dhcpOptions: {
-      dnsServers: dnsServers
     }
     enableDdosProtection: false
     subnets: [
@@ -101,5 +97,6 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
 }
 
 // Outputs
+output vnetId string = vnet.id 
 output servicesSubnetId string = vnet.properties.subnets[0].id
 output functionSubnetId string = vnet.properties.subnets[1].id
