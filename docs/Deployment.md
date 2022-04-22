@@ -196,7 +196,6 @@ Update these files in a separate branch and then merge via Pull Request to trigg
     | `tags` | Specifies the tags that you want to apply to all resources. | {`key`: `value`} |
     | `purviewId` | Specifies the Resource ID of the central Purview instance. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Purview/accounts/<your-purview-name>` |
     | `purviewRootCollectionName` | Specifies the name of the root collection of the Purview account. By default, the name is equal to your Purview account. | `dmz-dev-purview001` |
-    | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy id of the Purview account. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
     | `purviewManagedStorageId` | Specifies the Resource ID of the managed storage of the central purview instance. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Storage/storageAccounts/<your-storage-account-name>` |
     | `purviewManagedEventHubId` | Specifies the Resource ID of the managed event hub of the central purview instance. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.EventHub/namespaces/<your-eventhub-namespace-name>` |
     | `eventGridTopicSourceSubscriptions` | Specifies the subscriptions that should be monitored for data service deployments. The parameter accepts a list of objects. Each object specifies a subscription ID and a location in which the event grid topic will be deployed. | `[{"subscriptionId": "<your-subscription-id>", "location": "<your-azure-location>"}]` |
@@ -206,6 +205,33 @@ Update these files in a separate branch and then merge via Pull Request to trigg
     | `privateDnsZoneIdBlob` | Specifies the Resource ID of the private DNS zone for Blob Storage. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net` |
     | `privateDnsZoneIdFile` | Specifies the Resource ID of the private DNS zone for File Storage. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net` |
     | `privateDnsZoneIdKeyVault` | Specifies the Resource ID of the private DNS zone for KeyVault. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net` |
+    | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy id of the Purview account. To get this ID, please execute the CLI commands or PowerShell commands specified below. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
+
+    **Purview Root Collection Metadata Policy ID**
+
+    **Azure CLI**
+
+    ```sh
+    # 1. Get AAD Access Token
+    ACCESS_TOKEN=$(az account get-access-token --scope "https://purview.azure.net/.default" --query "accessToken" -o tsv)
+    echo "Your Access Token is the following (without single quotes): '$ACCESS_TOKEN'"
+
+    # 2 Make REST API call and replace <your-purview-account-name>, <your-purview-root-collection-name> and <your-access-token>
+    PURVIEW_ROOT_COLLECTION_METADATA_POLICY_ID=$(az rest --method get --url "https://<your-purview-account-name>.purview.azure.com/policyStore/metadataPolicies?collectionName=<your-purview-root-collection-name>&api-version=2021-07-01-preview" --skip-authorization-header --headers Authorization="Bearer <your-access-token>" --query "values[0].id")
+    echo "Your Purview Root Collection Metadata Policy ID is the following (without single quotes): '$PURVIEW_ROOT_COLLECTION_METADATA_POLICY_ID'"
+    ```
+
+    **Azure PowerShell**
+
+    ```powershell
+    # Specify the purview account name and root collection name 
+    $purviewAccountName = "<your-purview-account-name>"
+    $purviewRootCollectioName = "<your-purview-root-collection-name>"
+
+    $azureAccessToken = (Get-AzAccessToken -ResourceUrl "https://purview.azure.net").Token
+    $purviewRootCollectionMetadataPolicyId = (Invoke-RestMethod -Method Get -Uri "https://${purviewAccountName}.purview.azure.com/policystore/metadataPolicies?collectionName=${purviewRootCollectioName}&api-version=2021-07-01-preview" -Headers @{ "Authorization"="Bearer ${azureAccessToken}" }).values[0].id
+    Write-Host "Your Purview Root Collection Metadata Policy ID is the following (without single quotes): '${purviewRootCollectionMetadataPolicyId}'"
+    ```
 
 6. Commit the changes.
 7. Merge the changes into the `main` branch of your repository.
@@ -213,4 +239,4 @@ Update these files in a separate branch and then merge via Pull Request to trigg
 
 ## 5. Post-deployment steps
 
-TODO
+After deploying the solution successfully through GitHub Actions, you have to 

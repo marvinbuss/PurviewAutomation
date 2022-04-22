@@ -50,7 +50,7 @@ resource purview 'Microsoft.Purview/accounts@2021-07-01' = {
     #disable-next-line BCP073
     friendlyName: purviewName
     managedResourceGroupName: purviewName
-    publicNetworkAccess: 'Disabled'
+    publicNetworkAccess: 'Enabled'
   }
 }
 
