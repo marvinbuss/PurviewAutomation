@@ -224,7 +224,7 @@ Update these files in a separate branch and then merge via Pull Request to trigg
     **Azure PowerShell**
 
     ```powershell
-    # Specify the purview account name and root collection name 
+    # Specify the purview account name and root collection name
     $purviewAccountName = "<your-purview-account-name>"
     $purviewRootCollectioName = "<your-purview-root-collection-name>"
 
@@ -239,4 +239,6 @@ Update these files in a separate branch and then merge via Pull Request to trigg
 
 ## 5. Post-deployment steps
 
-After deploying the solution successfully through GitHub Actions, you have to 
+After deploying the solution successfully through GitHub Actions, you have to grant the the managed identity of the Azure function Data Source Admin rights to the root collection of Purview:
+
+![Purview Role Assignment](/docs/images/FunctionRoleAssignment.png)
