@@ -8,6 +8,7 @@ param location string
 param tags object
 param functionName string
 param functionSubnetId string
+param repositoryUrl string = ''
 
 // Variables
 var appServicePlanName = '${functionName}-asp001'
@@ -70,6 +71,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
       alwaysOn: false
       functionAppScaleLimit: 200
       http20Enabled: false
+      linuxFxVersion: 'DOTNETCORE|6.0'
       minTlsVersion: '1.2'
       minimumElasticInstanceCount: 1
       netFrameworkVersion: 'v6.0'
@@ -77,6 +79,16 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
       use32BitWorkerProcess: true
       vnetRouteAllEnabled: true
     }
+  }
+}
+
+resource functionSourceControl 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = if(!empty(repositoryUrl)) {
+  parent: function
+  name: 'web'
+  properties: {
+    repoUrl: repositoryUrl
+    branch: 'main'
+    isManualIntegration: true
   }
 }
 

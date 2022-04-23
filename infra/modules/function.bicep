@@ -11,6 +11,7 @@ param tags object
 param eventGridTopicDeadLetterStorageAccountContainerName string
 param subnetId string
 param functionSubnetId string
+param repositoryUrl string
 param purviewId string
 param purviewManagedEventHubId string
 param purviewManagedStorageId string
@@ -88,6 +89,7 @@ module function001 'services/function.bicep' = {
     tags: tags
     functionName: function001Name
     functionSubnetId: functionSubnetId
+    repositoryUrl: repositoryUrl
   }
 }
 

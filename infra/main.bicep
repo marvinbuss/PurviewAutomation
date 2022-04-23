@@ -20,6 +20,8 @@ param prefix string
 param tags object = {}
 
 // Resource Parameters
+@description('Specifies the repository URL in which the function app is checked in.')
+param repositoryUrl string
 @description('Specifies the resource ID of the central purview instance.')
 param purviewId string
 @description('Specifies the resource ID of the managed storage of the central purview instance.')
@@ -82,6 +84,7 @@ module functionResources 'modules/function.bicep' = {
     eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
     subnetId: subnetId
     functionSubnetId: functionSubnetId
+    repositoryUrl: repositoryUrl
     purviewId: purviewId
     purviewManagedStorageId: purviewManagedStorageId
     purviewManagedEventHubId: purviewManagedEventHubId
