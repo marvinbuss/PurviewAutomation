@@ -1,6 +1,6 @@
 # Deployment Guide
 
-Please follow the guide below to deploy the solution into your own tenant and subscription. 
+Please follow the guide below to deploy the solution into your own tenant and subscription.
 
 ## 0. Prerequisites
 
@@ -26,9 +26,9 @@ The following must be available to deploy the solution inside your Azure environ
 - [User Access Administrator](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#user-access-administrator) or [Owner](https://docs.microsoft.com/azure/role-based-access-control/built-in-roles#owner) access to the subscription to be able to create a service principal and role assignments for it.
 - For the deployment, please choose one of the **Supported Regions**.
 - It is also expected that a few resources have been deployed upfront. This includes:
-    - A Vnet with two subnets, whereas one needs to have `privateEndpointNetworkPolicies` disabled and the other one needs to be delegated to `Microsoft.Web/serverFarms`.
-    - An Azure Purview account in one of the supported regions.
-    - Private DNS Zones for blob storage, file storage, and key vault.
+  - A Vnet with two subnets, whereas one needs to have `privateEndpointNetworkPolicies` disabled and the other one needs to be delegated to `Microsoft.Web/serverFarms`.
+  - An Azure Purview account in one of the supported regions.
+  - Private DNS Zones for blob storage, file storage, and key vault.
 
 ### (Optional) Deployment of required services
 
@@ -126,7 +126,7 @@ A service principal with *Contributor* and *User Access Administrator* rights on
     ```
 
     **Azure PowerShell:**
-    
+
     ```powershell
     # Get Service Principal Object ID
     $spObjectId = (Get-AzADServicePrincipal -DisplayName "<your-service-principal-name>").id
@@ -205,7 +205,7 @@ Update these files in a separate branch and then merge via Pull Request to trigg
     | `privateDnsZoneIdBlob` | Specifies the Resource ID of the private DNS zone for Blob Storage. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.blob.core.windows.net` |
     | `privateDnsZoneIdFile` | Specifies the Resource ID of the private DNS zone for File Storage. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.file.core.windows.net` |
     | `privateDnsZoneIdKeyVault` | Specifies the Resource ID of the private DNS zone for KeyVault. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net` |
-    | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy id of the Purview account. To get this ID, please execute the CLI commands or PowerShell commands specified below. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
+    | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy ID of the Purview account. To get this ID, please execute the CLI commands or PowerShell commands specified below. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
 
     **Purview Root Collection Metadata Policy ID**
 
