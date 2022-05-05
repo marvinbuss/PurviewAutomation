@@ -5,8 +5,11 @@
         "location": {
             "value": "northeurope"
         },
+        "environment": {
+            "value": "dev"
+        },
         "prefix": {
-            "value": "prvw-atmtn-dev"
+            "value": "prvw-atmtn"
         },
         "tags": {
             "value": {}
@@ -19,11 +22,6 @@
         },
         "functionSubnetAddressPrefix": {
             "value": "10.254.0.32/27"
-        },
-        "dnsServers": {
-            "value": [
-               "10.0.0.4"
-            ]
         }
     }
 }

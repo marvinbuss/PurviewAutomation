@@ -17,8 +17,8 @@ on:
 env:
   DOTNET_VERSION: "6.0.x"
   WORKING_DIRECTORY: "code/"
-  AZURE_SUBSCRIPTION_ID: "4060c03e-0d2e-44b7-82a3-da9376fe50b2"  # Update to '{dataLandingZoneSubscriptionId}'
-  AZURE_LOCATION: "northeurope"                                  # Update to '{regionName}'
+  AZURE_SUBSCRIPTION_ID: "4060c03e-0d2e-44b7-82a3-da9376fe50b2"  # Update to '<your-subscription_id>'
+  AZURE_LOCATION: "northeurope"                                  # Update to '<your-azure-region>'
 
 
 jobs:
