@@ -58,7 +58,12 @@ If the services mentioend previously have not been deployed upfront, you can als
 
 4. Take note of the outputs of this deployment. The deployment provides output for all parameters that are required for subsequent steps.
 
-Now, we can start with the deployment of teh actual solution.
+Now, we can start with the deployment of the solution. There are tow options for the deployment:
+
+1. GitHub Actions: For this deployment, please follow the steps below.
+2. Deploy to Azure: For this option, please click on teh blue deployment button below:
+
+[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#blade/Microsoft_Azure_CreateUIDef/CustomDeploymentBlade/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarvinbuss%2FPurviewAutomation%2Fmain%2Finfra%2Fmain.json/uiFormDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarvinbuss%2FPurviewAutomation%2Fmain%2Fdocs%2Freference%2Fportal.json)
 
 ## 1. Fork the repository
 
@@ -207,7 +212,7 @@ Update these files in a separate branch and then merge via Pull Request to trigg
     | `privateDnsZoneIdKeyVault` | Specifies the Resource ID of the private DNS zone for KeyVault. | `/subscriptions/<your-subscription-id>/resourceGroups/<your-rg-name>/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net` |
     | `purviewRootCollectionMetadataPolicyId` | Specifies the root collection metadata policy ID of the Purview account. To get this ID, please execute the CLI commands or PowerShell commands specified below. | `e647bedc-2322-4380-bfc3-cacf504e3b2f` |
 
-    **Purview Root Collection Metadata Policy ID**
+    ### Purview Root Collection Metadata Policy ID
 
     **Azure CLI**
 

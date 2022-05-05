@@ -36,10 +36,22 @@ The solution can automatically create and trigger scans for data services. This 
 
 ![Automated setup of Scans](/docs/images/PurviewScanning.gif)
 
+## Deployment
+
+You have two options, to deploy this solution to your Azure tenant:
+
+1. GitHub Actions and
+2. Deploy to Azure Button.
+
+[![Deploy To Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#blade/Microsoft_Azure_CreateUIDef/CustomDeploymentBlade/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarvinbuss%2FPurviewAutomation%2Fmain%2Finfra%2Fmain.json/uiFormDefinitionUri/https%3A%2F%2Fraw.githubusercontent.com%2Fmarvinbuss%2FPurviewAutomation%2Fmain%2Fdocs%2Freference%2Fportal.json)
+
+For more details, [please visit the deployment documentation page](/docs/Deployment.md).
+
 ## More Details
 
-1. [Supported Services](/docs/SupportedServices.md)
-2. [Access Requirements](/docs/AccessRequirements.md)
-3. [Default Collection Structure](/docs/DefaultCollectionStructure.md)
-4. [Application Settings](/docs/ApplicationSettings.md)
-5. [Architecture](/docs/Architecture.md)
+1. [Deployment](/docs/Deployment.md)
+2. [Supported Services](/docs/SupportedServices.md)
+3. [Access Requirements](/docs/AccessRequirements.md)
+4. [Default Collection Structure](/docs/DefaultCollectionStructure.md)
+5. [Application Settings](/docs/ApplicationSettings.md)
+6. [Architecture](/docs/Architecture.md)
