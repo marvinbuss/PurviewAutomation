@@ -362,6 +362,16 @@
                                     }
                                 },
                                 {
+                                    "name": "infoBoxVirtualPurviewRootCollectionMetadataPolicyId",
+                                    "type": "Microsoft.Common.InfoBox",
+                                    "visible": true,
+                                    "options": {
+                                        "text": "Please follow the link to learn how to get the Purview Root Collection Metadata Policy ID.",
+                                        "style": "Info",
+                                        "uri": "https://github.com/marvinbuss/PurviewAutomation/blob/main/docs/Deployment.md#4-update-parameters"
+                                    }
+                                },
+                                {
                                     "name": "purviewRootCollectionMetadataPolicyId",
                                     "label": "Purview Root Collection Metadata Policy ID",
                                     "type": "Microsoft.Common.TextBox",
@@ -464,6 +474,15 @@
                                     }
                                 },
                                 {
+                                    "name": "infoBoxFunctionSubnetId",
+                                    "type": "Microsoft.Common.InfoBox",
+                                    "visible": true,
+                                    "options": {
+                                        "text": "Please make sure that the subnet is delegated to 'Microsoft.Web/serverFarms'.",
+                                        "style": "Info"
+                                    }
+                                },
+                                {
                                     "name": "functionSubnetId",
                                     "label": "Function Subnet",
                                     "type": "Microsoft.Common.DropDown",
@@ -476,7 +495,7 @@
                                     "filterPlaceholder": "Filter items ...",
                                     "multiLine": true,
                                     "constraints": {
-                                        "allowedValues": "[map(filter(steps('connectivitySettings').virtualNetwork.subnetApi.value,(item) => and(equals(first(item.properties.delegations).properties.serviceName, 'Microsoft.Web/serverFarms'), lessOrEquals(int(last(split(item.properties.addressPrefix, '/'))), 27))),(item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\",\"description\":\"', 'Resource Group: ', last(take(split(item.id, '/'), 5)), '\"}')))]",
+                                        "allowedValues": "[map(filter(steps('connectivitySettings').virtualNetwork.subnetApi.value,(item) => and(if(greater(length(item.properties.delegations), 0), true, false), lessOrEquals(int(last(split(item.properties.addressPrefix, '/'))), 27))),(item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\",\"description\":\"', 'Resource Group: ', last(take(split(item.id, '/'), 5)), '\"}')))]",
                                         "required": true
                                     }
                                 }
