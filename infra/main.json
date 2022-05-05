@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.5.6.12127",
-      "templateHash": "17213822519481227369"
+      "version": "0.6.1.6515",
+      "templateHash": "16603472111688462768"
     }
   },
   "parameters": {
@@ -219,8 +219,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "10833965781038222226"
+              "version": "0.6.1.6515",
+              "templateHash": "6023631385681393449"
             }
           },
           "parameters": {
@@ -326,8 +326,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "10798817573687273482"
+                      "version": "0.6.1.6515",
+                      "templateHash": "7368856988472031329"
                     }
                   },
                   "parameters": {
@@ -735,8 +735,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "1320545705780501230"
+                      "version": "0.6.1.6515",
+                      "templateHash": "13995751155036487696"
                     }
                   },
                   "parameters": {
@@ -813,8 +813,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "7333932116132012532"
+                      "version": "0.6.1.6515",
+                      "templateHash": "251182626726526760"
                     }
                   },
                   "parameters": {
@@ -951,8 +951,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "4872228607099666899"
+                      "version": "0.6.1.6515",
+                      "templateHash": "2937671081700466887"
                     }
                   },
                   "parameters": {
@@ -1070,8 +1070,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "16656482345151988304"
+                      "version": "0.6.1.6515",
+                      "templateHash": "13586711034100248565"
                     }
                   },
                   "parameters": {
@@ -1248,8 +1248,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "2825974121614205716"
+                      "version": "0.6.1.6515",
+                      "templateHash": "12602592125672373919"
                     }
                   },
                   "parameters": {
@@ -1353,8 +1353,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "6914974552135312539"
+                      "version": "0.6.1.6515",
+                      "templateHash": "14681412606045506587"
                     }
                   },
                   "parameters": {
@@ -1414,8 +1414,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "6868652650767193462"
+                      "version": "0.6.1.6515",
+                      "templateHash": "433420493337665819"
                     }
                   },
                   "parameters": {
@@ -1484,8 +1484,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "6868652650767193462"
+                      "version": "0.6.1.6515",
+                      "templateHash": "433420493337665819"
                     }
                   },
                   "parameters": {
@@ -1586,8 +1586,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "396121241017042680"
+              "version": "0.6.1.6515",
+              "templateHash": "14312527761663374418"
             }
           },
           "parameters": {
@@ -1668,8 +1668,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "6797471156231166873"
+              "version": "0.6.1.6515",
+              "templateHash": "7788357581172351842"
             }
           },
           "parameters": {
@@ -1737,8 +1737,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "10871677648661124842"
+                      "version": "0.6.1.6515",
+                      "templateHash": "2510474110852448626"
                     }
                   },
                   "parameters": {
@@ -1863,8 +1863,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "4403945370145949430"
+              "version": "0.6.1.6515",
+              "templateHash": "6865313334634027663"
             }
           },
           "parameters": {
@@ -1917,8 +1917,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "11233606820186338995"
+                      "version": "0.6.1.6515",
+                      "templateHash": "16346046413769926446"
                     }
                   },
                   "parameters": {
@@ -1972,8 +1972,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "16341912749540174573"
+                      "version": "0.6.1.6515",
+                      "templateHash": "3104933695207662905"
                     }
                   },
                   "parameters": {
@@ -2036,8 +2036,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.5.6.12127",
-                      "templateHash": "8273643821130672110"
+                      "version": "0.6.1.6515",
+                      "templateHash": "10884890870514067271"
                     }
                   },
                   "parameters": {
@@ -2062,6 +2062,7 @@
                     }
                   },
                   "variables": {
+                    "$fxv#0": "# Licensed under the MIT license.\r\n\r\n# Define script arguments\r\n[CmdletBinding()]\r\nparam (\r\n    [Parameter(Mandatory = $true)]\r\n    [ValidateNotNullOrEmpty()]\r\n    [string]\r\n    $PurviewId,\r\n\r\n    [Parameter(Mandatory = $false)]\r\n    [string[]]\r\n    $PurviewRootCollectionAdmins = @(),\r\n\r\n    [Parameter(Mandatory=$false)]\r\n    [Switch]\r\n    $SetPurviewAccountAsDefault\r\n)\r\n\r\n# Install Required Module\r\nWrite-Output \"Installing Required Module\"\r\nSet-PSRepository `\r\n    -Name PSGallery `\r\n    -InstallationPolicy Trusted\r\nInstall-Module `\r\n    -Name Az.Purview `\r\n    -Repository PSGallery `\r\n    -Force\r\n\r\n# Define Parameters\r\nWrite-Output \"Defining Parameters\"\r\n$tenantId = (Get-AzContext).Tenant.Id\r\n$purviewSubscriptionId = $PurviewId.Split(\"/\")[2]\r\n$purviewResourceGroupName = $PurviewId.Split(\"/\")[4]\r\n$purviewAccountName = $PurviewId.Split(\"/\")[8]\r\n\r\nif ($SetPurviewAccountAsDefault) {\r\n    # Set Purview Account as Default in Tenant\r\n    Write-Output \"Setting Purview Account as Default in Tenant\"\r\n    Set-AzPurviewDefaultAccount `\r\n        -ScopeTenantId $tenantId `\r\n        -ScopeType \"Tenant\" `\r\n        -Scope $tenantId `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName\r\n} else {\r\n    # NOT Set Purview Account as Default in Tenant\r\n    Write-Output \"NOT Setting Purview Account as Default in Tenant\"\r\n}\r\n\r\nforeach ($purviewRootCollectionAdmin in $PurviewRootCollectionAdmins) {\r\n    # Set Purview Root Collection Admin\r\n    Write-Output \"Setting Purview Root Collection Admin '${purviewRootCollectionAdmin}'\"\r\n    Add-AzPurviewAccountRootCollectionAdmin `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName `\r\n        -ObjectId $purviewRootCollectionAdmin\r\n}",
                     "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
                     "purviewSetupName": "[format('{0}-setup', variables('purviewName'))]",
                     "purviewRootCollectionAdminsInput": "[replace(replace(string(parameters('purviewRootCollectionAdminObjectIds')), '[', ''), ']', '')]"
@@ -2090,7 +2091,7 @@
                         },
                         "environmentVariables": [],
                         "forceUpdateTag": "[parameters('forceUpdateTag')]",
-                        "scriptContent": "# Licensed under the MIT license.\r\n\r\n# Define script arguments\r\n[CmdletBinding()]\r\nparam (\r\n    [Parameter(Mandatory = $true)]\r\n    [ValidateNotNullOrEmpty()]\r\n    [string]\r\n    $PurviewId,\r\n\r\n    [Parameter(Mandatory = $false)]\r\n    [string[]]\r\n    $PurviewRootCollectionAdmins = @(),\r\n\r\n    [Parameter(Mandatory=$false)]\r\n    [Switch]\r\n    $SetPurviewAccountAsDefault\r\n)\r\n\r\n# Install Required Module\r\nWrite-Output \"Installing Required Module\"\r\nSet-PSRepository `\r\n    -Name PSGallery `\r\n    -InstallationPolicy Trusted\r\nInstall-Module `\r\n    -Name Az.Purview `\r\n    -Repository PSGallery `\r\n    -Force\r\n\r\n# Define Parameters\r\nWrite-Output \"Defining Parameters\"\r\n$tenantId = (Get-AzContext).Tenant.Id\r\n$purviewSubscriptionId = $PurviewId.Split(\"/\")[2]\r\n$purviewResourceGroupName = $PurviewId.Split(\"/\")[4]\r\n$purviewAccountName = $PurviewId.Split(\"/\")[8]\r\n\r\nif ($SetPurviewAccountAsDefault) {\r\n    # Set Purview Account as Default in Tenant\r\n    Write-Output \"Setting Purview Account as Default in Tenant\"\r\n    Set-AzPurviewDefaultAccount `\r\n        -ScopeTenantId $tenantId `\r\n        -ScopeType \"Tenant\" `\r\n        -Scope $tenantId `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName\r\n} else {\r\n    # NOT Set Purview Account as Default in Tenant\r\n    Write-Output \"NOT Setting Purview Account as Default in Tenant\"\r\n}\r\n\r\nforeach ($purviewRootCollectionAdmin in $PurviewRootCollectionAdmins) {\r\n    # Set Purview Root Collection Admin\r\n    Write-Output \"Setting Purview Root Collection Admin '${purviewRootCollectionAdmin}'\"\r\n    Add-AzPurviewAccountRootCollectionAdmin `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName `\r\n        -ObjectId $purviewRootCollectionAdmin\r\n}",
+                        "scriptContent": "[variables('$fxv#0')]",
                         "retentionInterval": "P1D",
                         "supportingScriptUris": [],
                         "timeout": "PT30M"
@@ -2141,8 +2142,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "16944675706289890270"
+              "version": "0.6.1.6515",
+              "templateHash": "13022308203414252440"
             }
           },
           "parameters": {
@@ -2210,8 +2211,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.5.6.12127",
-              "templateHash": "16944675706289890270"
+              "version": "0.6.1.6515",
+              "templateHash": "13022308203414252440"
             }
           },
           "parameters": {
