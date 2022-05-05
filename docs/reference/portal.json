@@ -368,7 +368,7 @@
                                     "options": {
                                         "text": "Please follow the link to learn how to get the Purview Root Collection Metadata Policy ID.",
                                         "style": "Info",
-                                        "uri": "https://github.com/marvinbuss/PurviewAutomation/blob/main/docs/Deployment.md#4-update-parameters"
+                                        "uri": "https://github.com/marvinbuss/PurviewAutomation/blob/main/docs/Deployment.md#purview-root-collection-metadata-policy-id"
                                     }
                                 },
                                 {
@@ -377,7 +377,7 @@
                                     "type": "Microsoft.Common.TextBox",
                                     "visible": true,
                                     "defaultValue": "",
-                                    "toolTip": "Specify the ID of the Purview Root Collection Metadata Policy within the Purview account that you have selected earlier. For more details, please visit: 'https://github.com/marvinbuss/PurviewAutomation/blob/main/docs/Deployment.md#4-update-parameters'",
+                                    "toolTip": "Specify the ID of the Purview Root Collection Metadata Policy within the Purview account that you have selected earlier. For more details, please visit he link in the infobox above.",
                                     "constraints": {
                                         "required": true
                                     }
