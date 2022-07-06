@@ -15,6 +15,7 @@ param purviewManagedEventHubId string
 #disable-next-line no-unused-params
 param purviewRootCollectionName string
 param purviewRootCollectionMetadataPolicyId string
+param repositoryUrl string = ''
 
 // Variables
 var functionName = length(split(functionId, '/')) == 9 ? last(split(functionId, '/')) : 'incorrectSegmentLength'
@@ -25,7 +26,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
   name: functionName
 }
 
-resource test 'Microsoft.Web/sites/config@2021-02-01' = {
+resource functionAppSettings 'Microsoft.Web/sites/config@2021-02-01' = {
   parent: function
   name: 'appsettings'
   properties: {
@@ -33,7 +34,7 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     FUNCTIONS_WORKER_RUNTIME: 'dotnet'
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: '@Microsoft.KeyVault(SecretUri=${storageConnectionStringSecretUri})'
     WEBSITE_CONTENTSHARE: functionFileShareName
-    WEBSITE_RUN_FROM_PACKAGE: '1'
+    // WEBSITE_RUN_FROM_PACKAGE: '1'
     APPINSIGHTS_INSTRUMENTATIONKEY: '@Microsoft.KeyVault(SecretUri=${applicationInsightsInstrumentationKeySecretUri})'
     APPLICATIONINSIGHTS_CONNECTION_STRING: '@Microsoft.KeyVault(SecretUri=${applicationInsightsConnectionStringSecretUri})'
     APPINSIGHTS_PROFILERFEATURE_VERSION: '1.0.0'
@@ -42,6 +43,8 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     AzureWebJobsStorage: '@Microsoft.KeyVault(SecretUri=${storageConnectionStringSecretUri})'
     WEBSITE_CONTENTOVERVNET: '1'
     WEBSITE_VNET_ROUTE_ALL: '1'
+    PROJECT: empty(repositoryUrl) ? '' : 'code/PurviewAutomation/PurviewAutomation.csproj'
+    SCM_COMMAND_IDLE_TIMEOUT: '120'
     FunctionPrincipalId: function.identity.principalId
     PurviewResourceId: purviewId
     PurviewManagedStorageId: purviewManagedStorageId
@@ -54,6 +57,19 @@ resource test 'Microsoft.Web/sites/config@2021-02-01' = {
     TriggerScan: 'True'
     SetupLineage: 'True'
     RemoveDataSources: 'True'
+  }
+}
+
+resource functionSourceControl 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = if(!empty(repositoryUrl)) {
+  parent: function
+  name: 'web'
+  dependsOn: [
+    functionAppSettings
+  ]
+  properties: {
+    repoUrl: repositoryUrl
+    branch: 'main'
+    isManualIntegration: true
   }
 }
 

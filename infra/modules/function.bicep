@@ -89,7 +89,6 @@ module function001 'services/function.bicep' = {
     tags: tags
     functionName: function001Name
     functionSubnetId: functionSubnetId
-    repositoryUrl: repositoryUrl
   }
 }
 
@@ -110,6 +109,7 @@ module function001AppSettings 'services/functionAppSettings.bicep' = {
     storageConnectionStringSecretUri: keyvault001Secrets.outputs.storageConnectionStringSecretUri
     applicationInsightsInstrumentationKeySecretUri: keyvault001Secrets.outputs.applicationInsightsInstrumentationKeySecretUri
     applicationInsightsConnectionStringSecretUri: keyvault001Secrets.outputs.applicationInsightsConnectionStringSecretUri
+    repositoryUrl: repositoryUrl
   }
 }
 
