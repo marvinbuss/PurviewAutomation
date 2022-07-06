@@ -21,11 +21,11 @@ var applicationInsightsInstrumentationKeySecretName = 'applicationInsightsInstru
 var storageConnectionStringSecretName = 'storageConnectionString'
 
 // Resources
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' existing = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' existing = {
   name: keyVaultName
 }
 
-resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' existing = {
+resource storage 'Microsoft.Storage/storageAccounts@2021-09-01' existing = {
   name: storageName
   scope: resourceGroup(storageSubscriptionId, storageResourceGroupName)
 }
@@ -35,19 +35,19 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' existing
   scope: resourceGroup(applicationInsightsSubscriptionId, applicationInsightsResourceGroupName)
 }
 
-resource applicationInsightsConnectionString 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource applicationInsightsConnectionString 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
   name: applicationInsightsConnectionStringSecretName
   properties: {
     contentType: 'text/plain'
-    value: reference(applicationInsightsId, '2020-02-02').ConnectionString
+    value: reference(applicationInsightsId, applicationInsights.apiVersion).ConnectionString
     attributes: {
       enabled: true
     }
   }
 }
 
-resource applicationInsightsInstrumentationKey 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource applicationInsightsInstrumentationKey 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
   name: applicationInsightsInstrumentationKeySecretName
   properties: {
@@ -59,7 +59,7 @@ resource applicationInsightsInstrumentationKey 'Microsoft.KeyVault/vaults/secret
   }
 }
 
-resource storageConnectionString 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+resource storageConnectionString 'Microsoft.KeyVault/vaults/secrets@2021-11-01-preview' = {
   parent: keyVault
   name: storageConnectionStringSecretName
   properties: {

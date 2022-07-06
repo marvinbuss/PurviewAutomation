@@ -13,12 +13,12 @@ var userAssignedIdentityResourceGroupName = length(split(userAssignedIdentityId,
 var userAssignedIdentityName = length(split(userAssignedIdentityId, '/')) >= 9 ? last(split(userAssignedIdentityId, '/')) : 'incorrectSegmentLength'
 
 // Resources
-resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2018-11-30' existing = {
+resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2022-01-31-preview' existing = {
   name: userAssignedIdentityName
   scope:  resourceGroup(userAssignedIdentitySubscriptionId, userAssignedIdentityResourceGroupName)
 }
 
-resource resourceGroupRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-04-01-preview' = {
+resource resourceGroupRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid(uniqueString(resourceGroup().id, userAssignedIdentity.id))
   scope: resourceGroup()
   properties: {

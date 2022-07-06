@@ -22,11 +22,11 @@ var functionName = length(split(functionId, '/')) == 9 ? last(split(functionId, 
 var purviewName = length(split(purviewId, '/')) == 9 ? last(split(purviewId, '/')) : 'incorrectSegmentLength'
 
 // Resources
-resource function 'Microsoft.Web/sites@2021-02-01' existing = {
+resource function 'Microsoft.Web/sites@2022-03-01' existing = {
   name: functionName
 }
 
-resource functionAppSettings 'Microsoft.Web/sites/config@2021-02-01' = {
+resource functionAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
   parent: function
   name: 'appsettings'
   properties: {
@@ -60,7 +60,7 @@ resource functionAppSettings 'Microsoft.Web/sites/config@2021-02-01' = {
   }
 }
 
-resource functionSourceControl 'Microsoft.Web/sites/sourcecontrols@2021-03-01' = if(!empty(repositoryUrl)) {
+resource functionSourceControl 'Microsoft.Web/sites/sourcecontrols@2022-03-01' = if(!empty(repositoryUrl)) {
   parent: function
   name: 'web'
   dependsOn: [

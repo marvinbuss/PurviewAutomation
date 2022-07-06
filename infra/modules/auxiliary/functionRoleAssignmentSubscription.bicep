@@ -28,7 +28,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
   scope: resourceGroup(functionSubscriptionId, functionGroupName)
 }
 
-resource synapseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+resource synapseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid(uniqueString(subscription().subscriptionId, function.id, roles[role]))
   scope: subscription()
   properties: {
