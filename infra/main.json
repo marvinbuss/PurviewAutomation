@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.4.1124.51302",
-      "templateHash": "10359820753194618313"
+      "version": "0.6.1.6515",
+      "templateHash": "16603472111688462768"
     }
   },
   "parameters": {
@@ -40,6 +40,12 @@
       "defaultValue": {},
       "metadata": {
         "description": "Specifies the tags that you want to apply to all resources."
+      }
+    },
+    "repositoryUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Specifies the repository URL in which the function app is checked in."
       }
     },
     "purviewId": {
@@ -179,6 +185,9 @@
           "functionSubnetId": {
             "value": "[parameters('functionSubnetId')]"
           },
+          "repositoryUrl": {
+            "value": "[parameters('repositoryUrl')]"
+          },
           "purviewId": {
             "value": "[parameters('purviewId')]"
           },
@@ -210,8 +219,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.1124.51302",
-              "templateHash": "15485701305792356331"
+              "version": "0.6.1.6515",
+              "templateHash": "6023631385681393449"
             }
           },
           "parameters": {
@@ -231,6 +240,9 @@
               "type": "string"
             },
             "functionSubnetId": {
+              "type": "string"
+            },
+            "repositoryUrl": {
               "type": "string"
             },
             "purviewId": {
@@ -314,8 +326,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "12322320901118946649"
+                      "version": "0.6.1.6515",
+                      "templateHash": "7368856988472031329"
                     }
                   },
                   "parameters": {
@@ -508,7 +520,6 @@
                         "metadata": {}
                       },
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]",
                         "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageNameCleaned'), 'default')]"
                       ]
                     },
@@ -544,7 +555,6 @@
                         "shareQuota": 5120
                       },
                       "dependsOn": [
-                        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageNameCleaned'))]",
                         "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageNameCleaned'), 'default')]"
                       ]
                     },
@@ -725,8 +735,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "9050188796590348321"
+                      "version": "0.6.1.6515",
+                      "templateHash": "13995751155036487696"
                     }
                   },
                   "parameters": {
@@ -803,8 +813,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "12660131753967436973"
+                      "version": "0.6.1.6515",
+                      "templateHash": "251182626726526760"
                     }
                   },
                   "parameters": {
@@ -926,13 +936,13 @@
                 "mode": "Incremental",
                 "parameters": {
                   "keyVaultId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault001'), '2020-10-01').outputs.keyvaultId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault001')).outputs.keyvaultId.value]"
                   },
                   "applicationInsightsId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights001'), '2020-10-01').outputs.applicationInsightsId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'applicationInsights001')).outputs.applicationInsightsId.value]"
                   },
                   "storageId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage001'), '2020-10-01').outputs.storageId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage001')).outputs.storageId.value]"
                   }
                 },
                 "template": {
@@ -941,8 +951,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "13319299263426002866"
+                      "version": "0.6.1.6515",
+                      "templateHash": "2937671081700466887"
                     }
                   },
                   "parameters": {
@@ -1049,6 +1059,9 @@
                   },
                   "functionSubnetId": {
                     "value": "[parameters('functionSubnetId')]"
+                  },
+                  "repositoryUrl": {
+                    "value": "[parameters('repositoryUrl')]"
                   }
                 },
                 "template": {
@@ -1057,8 +1070,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "501105514544302736"
+                      "version": "0.6.1.6515",
+                      "templateHash": "13586711034100248565"
                     }
                   },
                   "parameters": {
@@ -1073,6 +1086,10 @@
                     },
                     "functionSubnetId": {
                       "type": "string"
+                    },
+                    "repositoryUrl": {
+                      "type": "string",
+                      "defaultValue": ""
                     }
                   },
                   "variables": {
@@ -1139,6 +1156,7 @@
                           "alwaysOn": false,
                           "functionAppScaleLimit": 200,
                           "http20Enabled": false,
+                          "linuxFxVersion": "DOTNETCORE|6.0",
                           "minTlsVersion": "1.2",
                           "minimumElasticInstanceCount": 1,
                           "netFrameworkVersion": "v6.0",
@@ -1149,6 +1167,20 @@
                       },
                       "dependsOn": [
                         "[resourceId('Microsoft.Web/serverfarms', variables('appServicePlanName'))]"
+                      ]
+                    },
+                    {
+                      "condition": "[not(empty(parameters('repositoryUrl')))]",
+                      "type": "Microsoft.Web/sites/sourcecontrols",
+                      "apiVersion": "2021-03-01",
+                      "name": "[format('{0}/{1}', parameters('functionName'), 'web')]",
+                      "properties": {
+                        "repoUrl": "[parameters('repositoryUrl')]",
+                        "branch": "main",
+                        "isManualIntegration": true
+                      },
+                      "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', parameters('functionName'))]"
                       ]
                     }
                   ],
@@ -1180,7 +1212,7 @@
                 "mode": "Incremental",
                 "parameters": {
                   "functionId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
                   },
                   "purviewId": {
                     "value": "[parameters('purviewId')]"
@@ -1201,13 +1233,13 @@
                     "value": "[variables('function001FileShareName')]"
                   },
                   "storageConnectionStringSecretUri": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault001Secrets'), '2020-10-01').outputs.storageConnectionStringSecretUri.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault001Secrets')).outputs.storageConnectionStringSecretUri.value]"
                   },
                   "applicationInsightsInstrumentationKeySecretUri": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault001Secrets'), '2020-10-01').outputs.applicationInsightsInstrumentationKeySecretUri.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault001Secrets')).outputs.applicationInsightsInstrumentationKeySecretUri.value]"
                   },
                   "applicationInsightsConnectionStringSecretUri": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault001Secrets'), '2020-10-01').outputs.applicationInsightsConnectionStringSecretUri.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault001Secrets')).outputs.applicationInsightsConnectionStringSecretUri.value]"
                   }
                 },
                 "template": {
@@ -1216,8 +1248,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "16760078088934925437"
+                      "version": "0.6.1.6515",
+                      "templateHash": "12602592125672373919"
                     }
                   },
                   "parameters": {
@@ -1253,7 +1285,8 @@
                     }
                   },
                   "variables": {
-                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]"
+                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]",
+                    "purviewName": "[if(equals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]"
                   },
                   "resources": [
                     {
@@ -1278,8 +1311,10 @@
                         "PurviewResourceId": "[parameters('purviewId')]",
                         "PurviewManagedStorageId": "[parameters('purviewManagedStorageId')]",
                         "PurviewManagedEventHubId": "[parameters('purviewManagedEventHubId')]",
-                        "PurviewRootCollectionName": "[parameters('purviewRootCollectionName')]",
+                        "PurviewRootCollectionName": "[variables('purviewName')]",
                         "PurviewRootCollectionMetadataPolicyId": "[parameters('purviewRootCollectionMetadataPolicyId')]",
+                        "ManagedIntegrationRuntimeName": "defaultIntegrationRuntime",
+                        "UseManagedPrivateEndpoints": "True",
                         "SetupScan": "True",
                         "TriggerScan": "True",
                         "SetupLineage": "True",
@@ -1306,10 +1341,10 @@
                 "mode": "Incremental",
                 "parameters": {
                   "keyVaultId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault001'), '2020-10-01').outputs.keyvaultId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyVault001')).outputs.keyvaultId.value]"
                   },
                   "functionId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
                   }
                 },
                 "template": {
@@ -1318,8 +1353,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "6603932275992585"
+                      "version": "0.6.1.6515",
+                      "templateHash": "14681412606045506587"
                     }
                   },
                   "parameters": {
@@ -1370,7 +1405,7 @@
                     "value": "Contributor"
                   },
                   "functionId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
                   }
                 },
                 "template": {
@@ -1379,8 +1414,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "8197756700522306063"
+                      "version": "0.6.1.6515",
+                      "templateHash": "433420493337665819"
                     }
                   },
                   "parameters": {
@@ -1440,7 +1475,7 @@
                     "value": "UserAccessAdministrator"
                   },
                   "functionId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
                   }
                 },
                 "template": {
@@ -1449,8 +1484,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "8197756700522306063"
+                      "version": "0.6.1.6515",
+                      "templateHash": "433420493337665819"
                     }
                   },
                   "parameters": {
@@ -1498,19 +1533,19 @@
           "outputs": {
             "storage001Id": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage001'), '2020-10-01').outputs.storageId.value]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage001')).outputs.storageId.value]"
             },
             "function001Id": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionId.value]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
             },
             "function001Name": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionName.value]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionName.value]"
             },
             "function001PrincipalId": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001'), '2020-10-01').outputs.functionPrincipalId.value]"
+              "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionPrincipalId.value]"
             }
           }
         }
@@ -1551,8 +1586,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.1124.51302",
-              "templateHash": "12127682310151188412"
+              "version": "0.6.1.6515",
+              "templateHash": "14312527761663374418"
             }
           },
           "parameters": {
@@ -1621,10 +1656,10 @@
             "value": "[variables('eventGridTopicDeadLetterStorageAccountContainerName')]"
           },
           "functionId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources'), '2020-10-01').outputs.function001Id.value]"
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')).outputs.function001Id.value]"
           },
           "storageId": {
-            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources'), '2020-10-01').outputs.storage001Id.value]"
+            "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')).outputs.storage001Id.value]"
           }
         },
         "template": {
@@ -1633,8 +1668,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.1124.51302",
-              "templateHash": "6515138997254437896"
+              "version": "0.6.1.6515",
+              "templateHash": "7788357581172351842"
             }
           },
           "parameters": {
@@ -1702,8 +1737,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "3815021320541988872"
+                      "version": "0.6.1.6515",
+                      "templateHash": "2510474110852448626"
                     }
                   },
                   "parameters": {
@@ -1818,7 +1853,7 @@
           },
           "purviewRootCollectionAdminObjectIds": {
             "value": [
-              "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources'), '2020-10-01').outputs.function001PrincipalId.value]"
+              "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')).outputs.function001PrincipalId.value]"
             ]
           }
         },
@@ -1828,8 +1863,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.4.1124.51302",
-              "templateHash": "9979520515717488627"
+              "version": "0.6.1.6515",
+              "templateHash": "6865313334634027663"
             }
           },
           "parameters": {
@@ -1882,8 +1917,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "1773924684182957173"
+                      "version": "0.6.1.6515",
+                      "templateHash": "16346046413769926446"
                     }
                   },
                   "parameters": {
@@ -1928,7 +1963,7 @@
                 "mode": "Incremental",
                 "parameters": {
                   "userAssignedIdentityId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'userAssignedIdentity001'), '2020-10-01').outputs.userAssignedIdentityId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'userAssignedIdentity001')).outputs.userAssignedIdentityId.value]"
                   }
                 },
                 "template": {
@@ -1937,8 +1972,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "15089794917938446955"
+                      "version": "0.6.1.6515",
+                      "templateHash": "3104933695207662905"
                     }
                   },
                   "parameters": {
@@ -1986,7 +2021,7 @@
                     "value": "[parameters('tags')]"
                   },
                   "userAssignedIdentityId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'userAssignedIdentity001'), '2020-10-01').outputs.userAssignedIdentityId.value]"
+                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'userAssignedIdentity001')).outputs.userAssignedIdentityId.value]"
                   },
                   "purviewId": {
                     "value": "[parameters('purviewId')]"
@@ -2001,8 +2036,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.4.1124.51302",
-                      "templateHash": "10140847797097050199"
+                      "version": "0.6.1.6515",
+                      "templateHash": "10884890870514067271"
                     }
                   },
                   "parameters": {
@@ -2027,6 +2062,7 @@
                     }
                   },
                   "variables": {
+                    "$fxv#0": "# Licensed under the MIT license.\r\n\r\n# Define script arguments\r\n[CmdletBinding()]\r\nparam (\r\n    [Parameter(Mandatory = $true)]\r\n    [ValidateNotNullOrEmpty()]\r\n    [string]\r\n    $PurviewId,\r\n\r\n    [Parameter(Mandatory = $false)]\r\n    [string[]]\r\n    $PurviewRootCollectionAdmins = @(),\r\n\r\n    [Parameter(Mandatory=$false)]\r\n    [Switch]\r\n    $SetPurviewAccountAsDefault\r\n)\r\n\r\n# Install Required Module\r\nWrite-Output \"Installing Required Module\"\r\nSet-PSRepository `\r\n    -Name PSGallery `\r\n    -InstallationPolicy Trusted\r\nInstall-Module `\r\n    -Name Az.Purview `\r\n    -Repository PSGallery `\r\n    -Force\r\n\r\n# Define Parameters\r\nWrite-Output \"Defining Parameters\"\r\n$tenantId = (Get-AzContext).Tenant.Id\r\n$purviewSubscriptionId = $PurviewId.Split(\"/\")[2]\r\n$purviewResourceGroupName = $PurviewId.Split(\"/\")[4]\r\n$purviewAccountName = $PurviewId.Split(\"/\")[8]\r\n\r\nif ($SetPurviewAccountAsDefault) {\r\n    # Set Purview Account as Default in Tenant\r\n    Write-Output \"Setting Purview Account as Default in Tenant\"\r\n    Set-AzPurviewDefaultAccount `\r\n        -ScopeTenantId $tenantId `\r\n        -ScopeType \"Tenant\" `\r\n        -Scope $tenantId `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName\r\n} else {\r\n    # NOT Set Purview Account as Default in Tenant\r\n    Write-Output \"NOT Setting Purview Account as Default in Tenant\"\r\n}\r\n\r\nforeach ($purviewRootCollectionAdmin in $PurviewRootCollectionAdmins) {\r\n    # Set Purview Root Collection Admin\r\n    Write-Output \"Setting Purview Root Collection Admin '${purviewRootCollectionAdmin}'\"\r\n    Add-AzPurviewAccountRootCollectionAdmin `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName `\r\n        -ObjectId $purviewRootCollectionAdmin\r\n}",
                     "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
                     "purviewSetupName": "[format('{0}-setup', variables('purviewName'))]",
                     "purviewRootCollectionAdminsInput": "[replace(replace(string(parameters('purviewRootCollectionAdminObjectIds')), '[', ''), ']', '')]"
@@ -2055,7 +2091,7 @@
                         },
                         "environmentVariables": [],
                         "forceUpdateTag": "[parameters('forceUpdateTag')]",
-                        "scriptContent": "# Licensed under the MIT license.\r\n\r\n# Define script arguments\r\n[CmdletBinding()]\r\nparam (\r\n    [Parameter(Mandatory = $true)]\r\n    [ValidateNotNullOrEmpty()]\r\n    [string]\r\n    $PurviewId,\r\n\r\n    [Parameter(Mandatory = $false)]\r\n    [string[]]\r\n    $PurviewRootCollectionAdmins = @(),\r\n\r\n    [Parameter(Mandatory=$false)]\r\n    [Switch]\r\n    $SetPurviewAccountAsDefault\r\n)\r\n\r\n# Install Required Module\r\nWrite-Output \"Installing Required Module\"\r\nSet-PSRepository `\r\n    -Name PSGallery `\r\n    -InstallationPolicy Trusted\r\nInstall-Module `\r\n    -Name Az.Purview `\r\n    -Repository PSGallery `\r\n    -Force\r\n\r\n# Define Parameters\r\nWrite-Output \"Defining Parameters\"\r\n$tenantId = (Get-AzContext).Tenant.Id\r\n$purviewSubscriptionId = $PurviewId.Split(\"/\")[2]\r\n$purviewResourceGroupName = $PurviewId.Split(\"/\")[4]\r\n$purviewAccountName = $PurviewId.Split(\"/\")[8]\r\n\r\nif ($SetPurviewAccountAsDefault) {\r\n    # Set Purview Account as Default in Tenant\r\n    Write-Output \"Setting Purview Account as Default in Tenant\"\r\n    Set-AzPurviewDefaultAccount `\r\n        -ScopeTenantId $tenantId `\r\n        -ScopeType \"Tenant\" `\r\n        -Scope $tenantId `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName\r\n} else {\r\n    # NOT Set Purview Account as Default in Tenant\r\n    Write-Output \"NOT Setting Purview Account as Default in Tenant\"\r\n}\r\n\r\nforeach ($purviewRootCollectionAdmin in $PurviewRootCollectionAdmins) {\r\n    # Set Purview Root Collection Admin\r\n    Write-Output \"Setting Purview Root Collection Admin '${purviewRootCollectionAdmin}'\"\r\n    Add-AzPurviewAccountRootCollectionAdmin `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName `\r\n        -ObjectId $purviewRootCollectionAdmin\r\n}",
+                        "scriptContent": "[variables('$fxv#0')]",
                         "retentionInterval": "P1D",
                         "supportingScriptUris": [],
                         "timeout": "PT30M"
@@ -2076,16 +2112,154 @@
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('automationResourceGroupName'))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')]"
       ]
+    },
+    {
+      "copy": {
+        "name": "purviewSubscriptionRoleAssignmentReader",
+        "count": "[length(parameters('eventGridTopicSourceSubscriptions'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "purviewSubscriptionRoleAssignmentReader",
+      "subscriptionId": "[parameters('eventGridTopicSourceSubscriptions')[copyIndex()].subscriptionId]",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "purviewId": {
+            "value": "[parameters('purviewId')]"
+          },
+          "role": {
+            "value": "Reader"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.6.1.6515",
+              "templateHash": "13022308203414252440"
+            }
+          },
+          "parameters": {
+            "purviewId": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "allowedValues": [
+                "Reader",
+                "StorageBlobDataReader"
+              ]
+            }
+          },
+          "variables": {
+            "purviewSubscriptionId": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[2], subscription().subscriptionId)]",
+            "purviewResourceGroupName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[4], 'incorrectSegmentLength')]",
+            "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
+            "roles": {
+              "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+              "StorageBlobDataReader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), variables('roles')[parameters('role')]))]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), '2021-07-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "copy": {
+        "name": "purviewSubscriptionRoleAssignmentStorageBlobReader",
+        "count": "[length(parameters('eventGridTopicSourceSubscriptions'))]"
+      },
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-10-01",
+      "name": "purviewSubscriptionRoleAssignmentStorageBlobReader",
+      "subscriptionId": "[parameters('eventGridTopicSourceSubscriptions')[copyIndex()].subscriptionId]",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "purviewId": {
+            "value": "[parameters('purviewId')]"
+          },
+          "role": {
+            "value": "StorageBlobDataReader"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.6.1.6515",
+              "templateHash": "13022308203414252440"
+            }
+          },
+          "parameters": {
+            "purviewId": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string",
+              "allowedValues": [
+                "Reader",
+                "StorageBlobDataReader"
+              ]
+            }
+          },
+          "variables": {
+            "purviewSubscriptionId": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[2], subscription().subscriptionId)]",
+            "purviewResourceGroupName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[4], 'incorrectSegmentLength')]",
+            "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
+            "roles": {
+              "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+              "StorageBlobDataReader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2020-04-01-preview",
+              "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), variables('roles')[parameters('role')]))]",
+              "properties": {
+                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), '2021-07-01', 'full').identity.principalId]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "outputs": {
     "function001Name": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources'), '2020-10-01').outputs.function001Name.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')).outputs.function001Name.value]"
     },
     "function001PrincipalId": {
       "type": "string",
-      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources'), '2020-10-01').outputs.function001PrincipalId.value]"
+      "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')).outputs.function001PrincipalId.value]"
     }
   }
 }

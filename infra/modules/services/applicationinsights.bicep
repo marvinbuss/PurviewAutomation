@@ -26,7 +26,7 @@ resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
     ImmediatePurgeDataOn30Days: true
     IngestionMode: 'ApplicationInsights'
     publicNetworkAccessForIngestion: 'Enabled'
-    publicNetworkAccessForQuery: 'Disabled'
+    publicNetworkAccessForQuery: 'Enabled'
     #disable-next-line BCP036
     Request_Source: 'IbizaWebAppExtensionCreate'
     // SamplingPercentage: 50  // Uncomment, if you want to define the sampling percentage that should be used for the telemetry.

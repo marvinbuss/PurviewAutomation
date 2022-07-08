@@ -14,7 +14,7 @@ param privateDnsZoneIdKeyVault string = ''
 var keyVaultPrivateEndpointName = '${keyVault.name}-private-endpoint'
 
 // Resources
-resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
+resource keyVault 'Microsoft.KeyVault/vaults@2021-11-01-preview' = {
   name: keyvaultName
   location: location
   tags: tags
@@ -42,7 +42,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2021-04-01-preview' = {
   }
 }
 
-resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: keyVaultPrivateEndpointName
   location: location
   tags: tags
@@ -66,7 +66,7 @@ resource keyVaultPrivateEndpoint 'Microsoft.Network/privateEndpoints@2020-11-01'
   }
 }
 
-resource keyVaultPrivateEndpointARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = if (!empty(privateDnsZoneIdKeyVault)) {
+resource keyVaultPrivateEndpointARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (!empty(privateDnsZoneIdKeyVault)) {
   parent: keyVaultPrivateEndpoint
   name: 'default'
   properties: {

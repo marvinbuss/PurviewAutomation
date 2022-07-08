@@ -13,7 +13,7 @@ param functionSubnetId string
 var appServicePlanName = '${functionName}-asp001'
 
 // Resources
-resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2022-03-01' = {
   name: appServicePlanName
   location: location
   tags: tags
@@ -36,7 +36,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   }
 }
 
-resource function 'Microsoft.Web/sites@2021-02-01' = {
+resource function 'Microsoft.Web/sites@2022-03-01' = {
   name: functionName
   location: location
   tags: tags
@@ -70,6 +70,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' = {
       alwaysOn: false
       functionAppScaleLimit: 200
       http20Enabled: false
+      // linuxFxVersion: 'DOTNETCORE|6.0'
       minTlsVersion: '1.2'
       minimumElasticInstanceCount: 1
       netFrameworkVersion: 'v6.0'

@@ -17,7 +17,7 @@ param createEventSubscription bool
 // Variables
 
 // Resources
-resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
+resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2022-06-15' = {
   name: eventGridTopicName
   location: 'global'
   tags: tags
@@ -30,7 +30,7 @@ resource eventGridTopic 'Microsoft.EventGrid/systemTopics@2021-12-01' = {
   }
 }
 
-resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2021-12-01' = if(createEventSubscription) {
+resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubscriptions@2022-06-15' = if(createEventSubscription) {
   parent: eventGridTopic
   name: 'service-creation'
   properties: {

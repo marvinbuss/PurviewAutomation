@@ -32,7 +32,7 @@ var storagePrivateEndpointNameFile = '${storage.name}-file-private-endpoint'
 var storagePrivateEndpointNameTable = '${storage.name}-table-private-endpoint'
 
 // Resources
-resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
+resource storage 'Microsoft.Storage/storageAccounts@2021-09-01' = {
   name: storageNameCleaned
   location: location
   tags: tags
@@ -92,7 +92,7 @@ resource storage 'Microsoft.Storage/storageAccounts@2021-06-01' = {
   }
 }
 
-resource storageManagementPolicies 'Microsoft.Storage/storageAccounts/managementPolicies@2021-06-01' = {
+resource storageManagementPolicies 'Microsoft.Storage/storageAccounts/managementPolicies@2021-09-01' = {
   parent: storage
   name: 'default'
   properties: {
@@ -155,7 +155,7 @@ resource storageManagementPolicies 'Microsoft.Storage/storageAccounts/management
   }
 }
 
-resource storageBlobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-06-01' = {
+resource storageBlobServices 'Microsoft.Storage/storageAccounts/blobServices@2021-09-01' = {
   parent: storage
   name: 'default'
   properties: {
@@ -192,7 +192,7 @@ resource storageBlobServices 'Microsoft.Storage/storageAccounts/blobServices@202
   }
 }
 
-resource storageContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-06-01' = [for storageContainerName in storageContainerNames: {
+resource storageContainers 'Microsoft.Storage/storageAccounts/blobServices/containers@2021-09-01' = [for storageContainerName in storageContainerNames: {
   parent: storageBlobServices
   name: storageContainerName
   properties: {
@@ -201,7 +201,7 @@ resource storageContainers 'Microsoft.Storage/storageAccounts/blobServices/conta
   }
 }]
 
-resource storageFileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-06-01' = {
+resource storageFileServices 'Microsoft.Storage/storageAccounts/fileServices@2021-09-01' = {
   parent: storage
   name: 'default'
   properties: {
@@ -215,7 +215,7 @@ resource storageFileServices 'Microsoft.Storage/storageAccounts/fileServices@202
   }
 }
 
-resource storageFileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-06-01' =  [for storageFileShareName in storageFileShareNames: {
+resource storageFileShares 'Microsoft.Storage/storageAccounts/fileServices/shares@2021-09-01' =  [for storageFileShareName in storageFileShareNames: {
   parent: storageFileServices
   name: storageFileShareName
   properties: {
@@ -226,7 +226,7 @@ resource storageFileShares 'Microsoft.Storage/storageAccounts/fileServices/share
   }
 }]
 
-resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: storagePrivateEndpointNameBlob
   location: location
   tags: tags
@@ -250,7 +250,7 @@ resource storagePrivateEndpointBlob 'Microsoft.Network/privateEndpoints@2020-11-
   }
 }
 
-resource storagePrivateEndpointBlobARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = if (!empty(privateDnsZoneIdBlob)) {
+resource storagePrivateEndpointBlobARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (!empty(privateDnsZoneIdBlob)) {
   parent: storagePrivateEndpointBlob
   name: 'default'
   properties: {
@@ -265,7 +265,7 @@ resource storagePrivateEndpointBlobARecord 'Microsoft.Network/privateEndpoints/p
   }
 }
 
-resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: storagePrivateEndpointNameFile
   location: location
   tags: tags
@@ -289,7 +289,7 @@ resource storagePrivateEndpointFile 'Microsoft.Network/privateEndpoints@2020-11-
   }
 }
 
-resource storagePrivateEndpointFileARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = if (!empty(privateDnsZoneIdFile)) {
+resource storagePrivateEndpointFileARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (!empty(privateDnsZoneIdFile)) {
   parent: storagePrivateEndpointFile
   name: 'default'
   properties: {
@@ -304,7 +304,7 @@ resource storagePrivateEndpointFileARecord 'Microsoft.Network/privateEndpoints/p
   }
 }
 
-resource storagePrivateEndpointTable 'Microsoft.Network/privateEndpoints@2020-11-01' = {
+resource storagePrivateEndpointTable 'Microsoft.Network/privateEndpoints@2022-01-01' = {
   name: storagePrivateEndpointNameTable
   location: location
   tags: tags
@@ -328,7 +328,7 @@ resource storagePrivateEndpointTable 'Microsoft.Network/privateEndpoints@2020-11
   }
 }
 
-resource storagePrivateEndpointTableARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2020-11-01' = if (!empty(privateDnsZoneIdTable)) {
+resource storagePrivateEndpointTableARecord 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2022-01-01' = if (!empty(privateDnsZoneIdTable)) {
   parent: storagePrivateEndpointTable
   name: 'default'
   properties: {

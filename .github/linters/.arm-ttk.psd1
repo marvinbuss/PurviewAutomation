@@ -11,5 +11,7 @@
         'Parameters Must Be Referenced'
         'Variables Must Be Referenced'
         'Location Should Not Be Hardcoded'
+        'Parameter Types Should Be Consistent'
+        'apiVersions Should Be Recent'
     )
 }

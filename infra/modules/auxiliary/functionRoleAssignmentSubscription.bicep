@@ -17,9 +17,9 @@ var functionSubscriptionId = length(split(functionId, '/')) == 9 ? split(functio
 var functionGroupName = length(split(functionId, '/')) == 9 ? split(functionId, '/')[4] : 'incorrectSegmentLength'
 var functionName = length(split(functionId, '/')) == 9 ? last(split(functionId, '/')) : 'incorrectSegmentLength'
 var roles = {
-  'Reader': 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
-  'Contributor': 'b24988ac-6180-42a0-ab88-20f7382dd24c'
-  'UserAccessAdministrator': '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9'
+  Reader: 'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+  Contributor: 'b24988ac-6180-42a0-ab88-20f7382dd24c'
+  UserAccessAdministrator: '18d7d88d-d35e-4fb5-a5c3-7773c20a72d9'
 }
 
 // Resources
@@ -28,7 +28,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
   scope: resourceGroup(functionSubscriptionId, functionGroupName)
 }
 
-resource synapseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-08-01-preview' = {
+resource synapseRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid(uniqueString(subscription().subscriptionId, function.id, roles[role]))
   scope: subscription()
   properties: {

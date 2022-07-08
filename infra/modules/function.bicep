@@ -11,6 +11,7 @@ param tags object
 param eventGridTopicDeadLetterStorageAccountContainerName string
 param subnetId string
 param functionSubnetId string
+param repositoryUrl string
 param purviewId string
 param purviewManagedEventHubId string
 param purviewManagedStorageId string
@@ -108,6 +109,7 @@ module function001AppSettings 'services/functionAppSettings.bicep' = {
     storageConnectionStringSecretUri: keyvault001Secrets.outputs.storageConnectionStringSecretUri
     applicationInsightsInstrumentationKeySecretUri: keyvault001Secrets.outputs.applicationInsightsInstrumentationKeySecretUri
     applicationInsightsConnectionStringSecretUri: keyvault001Secrets.outputs.applicationInsightsConnectionStringSecretUri
+    repositoryUrl: repositoryUrl
   }
 }
 
