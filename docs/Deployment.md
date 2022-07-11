@@ -214,28 +214,38 @@ Update these files in a separate branch and then merge via Pull Request to trigg
 
     ### Purview Root Collection Metadata Policy ID
 
+    **Azure PowerShell**
+
+    ```powershell
+    # Specify the purview account name and subscription ID
+    $subscriptionId = "<your-subscription-id>"
+    $purviewAccountName = "<your-purview-account-name>"
+    $purviewRootCollectioName = $purviewAccountName
+
+    Set-AzContext -Subscription $subscriptionId
+    $azureAccessToken = (Get-AzAccessToken -ResourceUrl "https://purview.azure.net").Token
+    $purviewRootCollectionMetadataPolicyId = (Invoke-RestMethod -Method Get -Uri "https://${purviewAccountName}.purview.azure.com/policystore/metadataPolicies?collectionName=${purviewRootCollectioName}&api-version=2021-07-01-preview" -Headers @{ "Authorization"="Bearer ${azureAccessToken}" }).values[0].id
+    Write-Host "Your Purview Root Collection Metadata Policy ID is the following (without single quotes): '${purviewRootCollectionMetadataPolicyId}'"
+    ```
+
     **Azure CLI**
 
     ```sh
+    # Specify the purview account name and subscription ID
+    SUBSCRIPTION_ID="<your-subscription-id>"
+    PURVIEW_ACCOUNT_NAME="<your-purview-account-name>"
+    PURVIEW_ROOT_COLLECTION_NAME=$PURVIEW_ACCOUNT_NAME
+
+    # 0. Set Azure Context
+    az account set -s $SUBSCRIPTION_ID
+
     # 1. Get AAD Access Token
     ACCESS_TOKEN=$(az account get-access-token --scope "https://purview.azure.net/.default" --query "accessToken" -o tsv)
     echo "Your Access Token is the following (without single quotes): '$ACCESS_TOKEN'"
 
     # 2 Make REST API call and replace <your-purview-account-name>, <your-purview-root-collection-name> and <your-access-token>
-    PURVIEW_ROOT_COLLECTION_METADATA_POLICY_ID=$(az rest --method get --url "https://<your-purview-account-name>.purview.azure.com/policyStore/metadataPolicies?collectionName=<your-purview-root-collection-name>&api-version=2021-07-01-preview" --skip-authorization-header --headers Authorization="Bearer <your-access-token>" --query "values[0].id")
+    PURVIEW_ROOT_COLLECTION_METADATA_POLICY_ID=$(az rest --method get --url "https://$PURVIEW_ACCOUNT_NAME.purview.azure.com/policyStore/metadataPolicies?collectionName=$PURVIEW_ROOT_COLLECTION_NAME&api-version=2021-07-01-preview" --skip-authorization-header --headers Authorization="Bearer $ACCESS_TOKEN" --query "values[0].id")
     echo "Your Purview Root Collection Metadata Policy ID is the following (without single quotes): '$PURVIEW_ROOT_COLLECTION_METADATA_POLICY_ID'"
-    ```
-
-    **Azure PowerShell**
-
-    ```powershell
-    # Specify the purview account name and root collection name
-    $purviewAccountName = "<your-purview-account-name>"
-    $purviewRootCollectioName = "<your-purview-root-collection-name>"
-
-    $azureAccessToken = (Get-AzAccessToken -ResourceUrl "https://purview.azure.net").Token
-    $purviewRootCollectionMetadataPolicyId = (Invoke-RestMethod -Method Get -Uri "https://${purviewAccountName}.purview.azure.com/policystore/metadataPolicies?collectionName=${purviewRootCollectioName}&api-version=2021-07-01-preview" -Headers @{ "Authorization"="Bearer ${azureAccessToken}" }).values[0].id
-    Write-Host "Your Purview Root Collection Metadata Policy ID is the following (without single quotes): '${purviewRootCollectionMetadataPolicyId}'"
     ```
 
 6. Commit the changes.

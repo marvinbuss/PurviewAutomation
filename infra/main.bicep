@@ -28,8 +28,6 @@ param purviewId string
 param purviewManagedStorageId string
 @description('Specifies the resource ID of the managed event hub of the central purview instance.')
 param purviewManagedEventHubId string
-@description('Specifies the name of the purview root collection.')
-param purviewRootCollectionName string
 @description('Specifies the id of the purview root collection metadata policy.')
 param purviewRootCollectionMetadataPolicyId string
 @description('Specifies the subscription ids for which event grid topics should be created.')
@@ -61,6 +59,7 @@ var tagsDefault = {
   Name: name
 }
 var tagsJoined = union(tagsDefault, tags)
+var purviewRootCollectionName = last(split(purviewId, '/'))
 var eventGridTopicDeadLetterStorageAccountContainerName = 'deadletters'
 var functionResourceGroupName = '${name}-function'
 var eventsResourceGroupName = '${name}-events'
