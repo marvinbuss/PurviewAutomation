@@ -351,17 +351,6 @@
                                     }
                                 },
                                 {
-                                    "name": "purviewRootCollectionName",
-                                    "label": "Purview Root Collection Name",
-                                    "type": "Microsoft.Common.TextBox",
-                                    "visible": true,
-                                    "defaultValue": "",
-                                    "toolTip": "Specify the name of the Purview Root Collection within the Purview account that you have selected earlier.",
-                                    "constraints": {
-                                        "required": true
-                                    }
-                                },
-                                {
                                     "name": "infoBoxVirtualPurviewRootCollectionMetadataPolicyId",
                                     "type": "Microsoft.Common.InfoBox",
                                     "visible": true,
@@ -469,7 +458,7 @@
                                     "filterPlaceholder": "Filter items ...",
                                     "multiLine": true,
                                     "constraints": {
-                                        "allowedValues": "[map(filter(steps('connectivitySettings').virtualNetwork.subnetApi.value,(item) => and(equals(item.properties.privateEndpointNetworkPolicies, 'Disabled'), equals(item.properties.privateLinkServiceNetworkPolicies, 'Disabled'), lessOrEquals(int(last(split(item.properties.addressPrefix, '/'))), 27))),(item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\",\"description\":\"', 'Resource Group: ', last(take(split(item.id, '/'), 5)), '\"}')))]",
+                                        "allowedValues": "[map(filter(steps('connectivitySettings').virtualNetwork.subnetApi.value,(item) => and(equals(item.properties.privateEndpointNetworkPolicies, 'Disabled'), lessOrEquals(int(last(split(item.properties.addressPrefix, '/'))), 27))),(item) => parse(concat('{\"label\":\"', item.name, '\",\"value\":\"', item.id, '\",\"description\":\"', 'Resource Group: ', last(take(split(item.id, '/'), 5)), '\"}')))]",
                                         "required": true
                                     }
                                 },
@@ -669,11 +658,10 @@
                 "environment": "[if(empty(steps('basics').deploymentPrefix.environment), '', steps('basics').deploymentPrefix.environment)]",
                 "prefix": "[if(empty(steps('basics').deploymentPrefix.resourcePrefix), '', steps('basics').deploymentPrefix.resourcePrefix)]",
                 "tags": "[if(not(contains(steps('tags').tagsByResource, 'DataManagementAnalytics')), parse('{}'), first(map(parse(concat('[', string(steps('tags').tagsByResource), ']')), (item) => item.DataManagementAnalytics)))]",
-                "repositoryUrl": "https://github.com/marvinbuss/PurviewAutomation",
+                "repositoryUrl": "https://github.com/marvinbuss/PurviewAutomation.git",
                 "purviewId": "[if(empty(steps('generalSettings').purviewSettings.purviewId.id), '', steps('generalSettings').purviewSettings.purviewId.id)]",
                 "purviewManagedStorageId": "[if(empty(steps('generalSettings').purviewSettings.purviewId.id), '', steps('generalSettings').purviewSettings.purviewApi.properties.managedResources.storageAccount)]",
                 "purviewManagedEventHubId": "[if(empty(steps('generalSettings').purviewSettings.purviewId.id), '', steps('generalSettings').purviewSettings.purviewApi.properties.managedResources.eventHubNamespace)]",
-                "purviewRootCollectionName": "[if(empty(steps('generalSettings').purviewSettings.purviewRootCollectionName), '', steps('generalSettings').purviewSettings.purviewRootCollectionName)]",
                 "purviewRootCollectionMetadataPolicyId": "[if(empty(steps('generalSettings').purviewSettings.purviewRootCollectionMetadataPolicyId), '', steps('generalSettings').purviewSettings.purviewRootCollectionMetadataPolicyId)]",
                 "eventGridTopicSourceSubscriptions": "[steps('generalSettings').monitoredSubscriptions.eventGridTopicSourceSubscriptions]",
                 "createEventSubscription": true,
