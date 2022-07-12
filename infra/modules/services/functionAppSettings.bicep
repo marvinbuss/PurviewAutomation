@@ -34,7 +34,7 @@ resource functionAppSettings 'Microsoft.Web/sites/config@2022-03-01' = {
     FUNCTIONS_WORKER_RUNTIME: 'dotnet'
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: '@Microsoft.KeyVault(SecretUri=${storageConnectionStringSecretUri})'
     WEBSITE_CONTENTSHARE: functionFileShareName
-    // WEBSITE_RUN_FROM_PACKAGE: '1'
+    WEBSITE_RUN_FROM_PACKAGE: empty(repositoryUrl) ? '1' : '0'
     APPINSIGHTS_INSTRUMENTATIONKEY: '@Microsoft.KeyVault(SecretUri=${applicationInsightsInstrumentationKeySecretUri})'
     APPLICATIONINSIGHTS_CONNECTION_STRING: '@Microsoft.KeyVault(SecretUri=${applicationInsightsConnectionStringSecretUri})'
     APPINSIGHTS_PROFILERFEATURE_VERSION: '1.0.0'

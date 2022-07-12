@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.8.9.13224",
-      "templateHash": "13478764820164169077"
+      "templateHash": "4148752540959760465"
     }
   },
   "parameters": {
@@ -215,7 +215,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.8.9.13224",
-              "templateHash": "8275472130234771513"
+              "templateHash": "1524494931754403880"
             }
           },
           "parameters": {
@@ -1225,7 +1225,7 @@
                     "_generator": {
                       "name": "bicep",
                       "version": "0.8.9.13224",
-                      "templateHash": "7378686211918406800"
+                      "templateHash": "10266932321883839942"
                     }
                   },
                   "parameters": {
@@ -1278,6 +1278,7 @@
                         "FUNCTIONS_WORKER_RUNTIME": "dotnet",
                         "WEBSITE_CONTENTAZUREFILECONNECTIONSTRING": "[format('@Microsoft.KeyVault(SecretUri={0})', parameters('storageConnectionStringSecretUri'))]",
                         "WEBSITE_CONTENTSHARE": "[parameters('functionFileShareName')]",
+                        "WEBSITE_RUN_FROM_PACKAGE": "[if(empty(parameters('repositoryUrl')), '1', '0')]",
                         "APPINSIGHTS_INSTRUMENTATIONKEY": "[format('@Microsoft.KeyVault(SecretUri={0})', parameters('applicationInsightsInstrumentationKeySecretUri'))]",
                         "APPLICATIONINSIGHTS_CONNECTION_STRING": "[format('@Microsoft.KeyVault(SecretUri={0})', parameters('applicationInsightsConnectionStringSecretUri'))]",
                         "APPINSIGHTS_PROFILERFEATURE_VERSION": "1.0.0",
