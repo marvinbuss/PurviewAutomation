@@ -67,7 +67,7 @@ resource function 'Microsoft.Web/sites@2022-03-01' = {
         ]
       }
       acrUseManagedIdentityCreds: false
-      alwaysOn: false
+      alwaysOn: true
       functionAppScaleLimit: 200
       http20Enabled: false
       // linuxFxVersion: 'DOTNETCORE|6.0'
