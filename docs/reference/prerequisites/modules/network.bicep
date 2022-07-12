@@ -62,7 +62,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
           }
           delegations: []
           privateEndpointNetworkPolicies: 'Disabled'
-          privateLinkServiceNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
           serviceEndpointPolicies: []
           serviceEndpoints: []
         }
@@ -87,7 +87,7 @@ resource vnet 'Microsoft.Network/virtualNetworks@2020-06-01' = {
             }
           ]
           privateEndpointNetworkPolicies: 'Enabled'
-          privateLinkServiceNetworkPolicies: 'Disabled'
+          privateLinkServiceNetworkPolicies: 'Enabled'
           serviceEndpointPolicies: []
           serviceEndpoints: []
         }
