@@ -7,7 +7,7 @@
             "steps": [
                 {
                     "name": "basics",
-                    "label": "Data Landing Zone",
+                    "label": "Deployment Location",
                     "elements": [
                         {
                             "name": "infoBoxDataManagementAnalytics",
