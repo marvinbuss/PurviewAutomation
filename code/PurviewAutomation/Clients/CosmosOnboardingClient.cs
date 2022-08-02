@@ -2,7 +2,6 @@
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.CosmosDB;
-using Azure.ResourceManager.Sql;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;

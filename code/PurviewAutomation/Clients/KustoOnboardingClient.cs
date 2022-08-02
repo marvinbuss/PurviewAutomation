@@ -4,7 +4,6 @@ using Azure.ResourceManager;
 using Azure.ResourceManager.Resources;
 using Microsoft.Extensions.Logging;
 using PurviewAutomation.Models.General;
-using PurviewAutomation.Models.Purview;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
