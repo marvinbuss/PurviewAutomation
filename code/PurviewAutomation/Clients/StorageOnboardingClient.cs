@@ -27,14 +27,17 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<StorageAccount>> GetResourceAsync()
+    private async Task<StorageAccountResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get storage
-        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));
-        return await resourceGroup.GetStorageAccounts().GetAsync(accountName: this.resource.Name);
+        var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId: this.resource.SubscriptionId);
+        var resourceGroup = await subscription.Value.GetResourceGroupAsync(resourceGroupName: this.resource.ResourceGroupName);
+        var storage = await resourceGroup.Value.GetStorageAccountAsync(accountName: this.resource.Name);
+
+        return storage.Value;
     }
 
     public async Task AddDataSourceAsync()
@@ -46,15 +49,15 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         var dataSource = new
         {
             name = this.resource.Name,
-            kind = storage.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
+            kind = storage.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
             properties = new
             {
                 resourceId = resourceId,
                 subscriptionId = this.resource.SubscriptionId,
                 resourceGroup = this.resource.ResourceGroupName,
                 resourceName = this.resource.Name,
-                endpoint = storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net/",
-                location = storage.Value.Data.Location.ToString(),
+                endpoint = storage.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net/",
+                location = storage.Data.Location.ToString(),
                 // dataUseGovernance = "Enabled",
                 collection = new
                 {
@@ -75,7 +78,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
 
         // Create managed private endpoints
         string managedIntegrationRuntimeName;
-        if (storage.Value.Data.IsHnsEnabled.Equals(true))
+        if (storage.Data.IsHnsEnabled.Equals(true))
         {
             managedIntegrationRuntimeName = await this.purviewAutomationClient.CreateManagedPrivateEndpointAsync(name: this.resource.Name, groupId: "dfs", resourceId: this.resourceId);
         }
@@ -96,10 +99,10 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
         var scan = new
         {
             name = scanName,
-            kind = storage.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2Msi" : "AzureStorageMsi",
+            kind = storage.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2Msi" : "AzureStorageMsi",
             properties = new
             {
-                scanRulesetName = storage.Value.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
+                scanRulesetName = storage.Data.IsHnsEnabled.Equals(true) ? "AdlsGen2" : "AzureStorage",
                 scanRulesetType = "System",
                 collection = new
                 {
@@ -143,7 +146,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
             properties = new
             {
                 excludeUriPrefixes = new string[] { },
-                includeUriPrefixes = new string[] { storage.Value.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net" }
+                includeUriPrefixes = new string[] { storage.Data.IsHnsEnabled.Equals(true) ? $"https://{this.resource.Name}.dfs.core.windows.net/" : $"https://{this.resource.Name}.blob.core.windows.net" }
             }
         };
 
@@ -168,7 +171,7 @@ internal class StorageOnboardingClient : IDataSourceOnboardingClient
     {
         await this.AddDataSourceAsync();
 
-        string managedIntegrationRuntimeName = null;
+        string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
             managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();

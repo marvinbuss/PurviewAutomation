@@ -33,13 +33,15 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    private async Task<GenericResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+        var resource = await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+
+        return resource.Value;
     }
 
     public async Task AddDataSourceAsync()
@@ -60,7 +62,7 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
                 resourceName = this.resource.Name,
                 serverlessSqlEndpoint = $"{this.resource.Name}-ondemand.sql.azuresynapse.net",
                 dedicatedSqlEndpoint = $"{this.resource.Name}.sql.azuresynapse.net",
-                location = synapse.Value.Data.Location.ToString(),
+                location = synapse.Data.Location.ToString(),
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
@@ -239,7 +241,7 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
         await this.AddDataSourceAsync();
 
 
-        string managedIntegrationRuntimeName = null;
+        string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
             managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
@@ -258,6 +260,6 @@ internal class SynapseOnboardingClient : IDataSourceOnboardingClient, ILineageOn
 
         await this.AddRoleAssignmentAsync(principalId: principalId, role: SynapseRole.LinkedDataManager);
         await this.AddLineageManagedPrivateEndpointsAsync();
-        await this.purviewAutomationClient.AddRoleAssignmentAsync(principalId: synapse.Value.Data.Identity.PrincipalId.ToString(), role: PurviewRole.DataCurator);
+        await this.purviewAutomationClient.AddRoleAssignmentAsync(principalId: synapse.Data.Identity.PrincipalId.ToString(), role: PurviewRole.DataCurator);
     }
 }

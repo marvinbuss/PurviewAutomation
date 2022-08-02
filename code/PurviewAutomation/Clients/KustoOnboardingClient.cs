@@ -29,13 +29,15 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    private async Task<GenericResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+        var resource = await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+
+        return resource.Value;
     }
 
     public async Task AddDataSourceAsync()
@@ -54,8 +56,8 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
                 subscriptionId = this.resource.SubscriptionId,
                 resourceGroup = this.resource.ResourceGroupName,
                 resourceName = this.resource.Name,
-                endpoint = $"https://{this.resource.Name}.{kusto.Value.Data.Location}.kusto.windows.net",
-                location = kusto.Value.Data.Location.ToString(),
+                endpoint = $"https://{this.resource.Name}.{kusto.Data.Location}.kusto.windows.net",
+                location = kusto.Data.Location.ToString(),
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
@@ -88,7 +90,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
             {
                 scanRulesetName = "AzureDataExplorer",
                 scanRulesetType = "System",
-                endpoint = $"https://{this.resource.Name}.{kusto.Value.Data.Location}.kusto.windows.net",
+                endpoint = $"https://{this.resource.Name}.{kusto.Data.Location}.kusto.windows.net",
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
@@ -131,7 +133,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
             properties = new
             {
                 excludeUriPrefixes = new string[] { },
-                includeUriPrefixes = new string[] { $"https://{this.resource.Name}.{kusto.Value.Data.Location}.kusto.windows.net/" }
+                includeUriPrefixes = new string[] { $"https://{this.resource.Name}.{kusto.Data.Location}.kusto.windows.net/" }
             }
         };
 
@@ -161,8 +163,8 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         // Create client
         var armClientOptions = new ArmClientOptions();
         this.logger.LogInformation($"Resource Type: {roleAssignmentResourceId.ResourceType}");
-        armClientOptions.SetApiVersion(resourceType: roleAssignmentResourceId.ResourceType, apiVersion: "2021-01-01");
-        var armClient = new ArmClient(credential: new DefaultAzureCredential(), options: armClientOptions);
+        armClientOptions.SetApiVersion(resourceType: roleAssignmentResourceId.ResourceType, apiVersion: "2022-02-01");
+        var armClient = new ArmClient(credential: new DefaultAzureCredential(), defaultSubscriptionId: this.resource.SubscriptionId, options: armClientOptions);
 
         // Get role
         var roleString = KustoRoleConverter.ConvertRoleToString(role: role);
@@ -172,30 +174,31 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         var tenantList = armClient.GetTenants().GetAll();
         foreach (var tenant in tenantList)
         {
-            tenantId = tenant.Data.TenantId;
+            tenantId = tenant.Data.TenantId.ToString();
             break;
         }
 
         // Create cluster role assignment
         var genericResources = armClient.GetGenericResources();
-        var principalAssignmentResourceParameters = new GenericResourceData(location: kusto.Value.Data.Location)
+        var principalAssignmentResourceData = new GenericResourceData(location: kusto.Data.Location)
         {
-            Properties = new Dictionary<string, object>()
+            Properties = BinaryData.FromObjectAsJson(new Dictionary<string, object>()
             {
                 { "principalId", principalId },
                 { "principalType", "App" },
                 { "role", roleString },
                 { "tenantId", tenantId }
-            }
+            })
         };
-        await genericResources.CreateOrUpdateAsync(waitForCompletion: true, resourceId: roleAssignmentResourceId, parameters: principalAssignmentResourceParameters);
+
+        await genericResources.CreateOrUpdateAsync(waitUntil: Azure.WaitUntil.Completed, resourceId: roleAssignmentResourceId, data: principalAssignmentResourceData);
     }
 
     public async Task OnboardDataSourceAsync(bool useManagedPrivateEndpoints, bool setupScan, bool triggerScan)
     {
         await this.AddDataSourceAsync();
 
-        string managedIntegrationRuntimeName = null;
+        string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
             // managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
@@ -203,7 +206,7 @@ internal class KustoOnboardingClient : IDataSourceOnboardingClient
         if (setupScan)
         {
             var purview = await this.purviewAutomationClient.GetResourceAsync();
-            await this.AddRoleAssignmentAsync(principalId: purview.Value.Data.Identity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
+            await this.AddRoleAssignmentAsync(principalId: purview.Data.Identity.PrincipalId.ToString(), role: KustoRole.AllDatabasesViewer);
             await this.AddScanAsync(triggerScan: triggerScan, managedIntegrationRuntimeName: managedIntegrationRuntimeName);
         }
     }
