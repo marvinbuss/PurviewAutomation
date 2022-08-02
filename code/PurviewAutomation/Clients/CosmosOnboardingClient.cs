@@ -2,6 +2,7 @@
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.CosmosDB;
+using Azure.ResourceManager.Sql;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -27,14 +28,17 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<DatabaseAccount>> GetResourceAsync()
+    private async Task<CosmosDBAccountResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
-        // Get resource
-        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));
-        return await resourceGroup.GetDatabaseAccounts().GetAsync(accountName: this.resource.Name);
+        // Get database
+        var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId: this.resource.SubscriptionId);
+        var resourceGroup = await subscription.Value.GetResourceGroupAsync(resourceGroupName: this.resource.ResourceGroupName);
+        var cosmos = await resourceGroup.Value.GetCosmosDBAccountAsync(accountName: this.resource.Name);
+
+        return cosmos.Value;
     }
 
     public async Task AddDataSourceAsync()
@@ -54,7 +58,7 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
                 resourceGroup = this.resource.ResourceGroupName,
                 resourceName = this.resource.Name,
                 accountUri = $"https://{this.resource.Name}.documents.azure.com:443/",
-                location = cosmos.Value.Data.Location.ToString(),
+                location = cosmos.Data.Location.ToString(),
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
@@ -75,16 +79,16 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
 
     public async Task AddScanAsync(bool triggerScan, string managedIntegrationRuntimeName)
     {
-        throw new NotImplementedException();
-
         // Get resource
         var cosmos = await this.GetResourceAsync();
 
         // Get cosmos key
-        var primaryKey = cosmos.Value.GetKeys().Value.PrimaryMasterKey;
+        var primaryKey = cosmos.GetKeys().Value.PrimaryMasterKey;
 
         // TODO: Store key in Key Vault
         // TODO: Create scan
+
+        throw new NotImplementedException();
     }
 
     public async Task RemoveDataSourceAsync()
@@ -97,7 +101,7 @@ internal class CosmosOnboardingClient : IDataSourceOnboardingClient
     {
         await this.AddDataSourceAsync();
 
-        string managedIntegrationRuntimeName = null;
+        string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
             managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();

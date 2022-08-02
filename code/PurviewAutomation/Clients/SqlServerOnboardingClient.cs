@@ -27,14 +27,17 @@ internal class SqlServerOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<SqlServer>> GetResourceAsync()
+    private async Task<SqlServerResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
-        // Get sql
-        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));
-        return await resourceGroup.GetSqlServers().GetAsync(serverName: this.resource.Name);
+        // Get sql server
+        var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId: this.resource.SubscriptionId);
+        var resourceGroup = await subscription.Value.GetResourceGroupAsync(resourceGroupName: this.resource.ResourceGroupName);
+        var sqlServer = await resourceGroup.Value.GetSqlServerAsync(serverName: this.resource.Name);
+
+        return sqlServer.Value;
     }
 
     public async Task AddDataSourceAsync()

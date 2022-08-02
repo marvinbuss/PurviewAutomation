@@ -28,23 +28,28 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    private async Task<GenericResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+        var resource = await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+
+        return resource.Value;
     }
 
-    private async Task<Azure.Response<SqlServer>> GetParentResourceAsync()
+    private async Task<SqlServerResource> GetParentResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
-        // Get sql
-        var resourceGroup = armClient.GetResourceGroup(id: new ResourceIdentifier(resourceId: $"/subscriptions/{this.resource.SubscriptionId}/resourceGroups/{this.resource.ResourceGroupName}"));
-        return await resourceGroup.GetSqlServers().GetAsync(serverName: this.resource.Parent.Name);
+        // Get sql server
+        var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId: this.resource.SubscriptionId);
+        var resourceGroup = await subscription.Value.GetResourceGroupAsync(resourceGroupName: this.resource.ResourceGroupName);
+        var sqlServer = await resourceGroup.Value.GetSqlServerAsync(serverName: this.resource.Parent.Name);
+
+        return sqlServer.Value;
     }
 
     public async Task AddDataSourceAsync()
@@ -64,8 +69,8 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
                 subscriptionId = this.resource.SubscriptionId,
                 resourceGroup = this.resource.ResourceGroupName,
                 resourceName = this.resource.Name,
-                serverEndpoint = sqlServer.Value.Data.FullyQualifiedDomainName,
-                location = sqlDatabase.Value.Data.Location.ToString(),
+                serverEndpoint = sqlServer.Data.FullyQualifiedDomainName,
+                location = sqlDatabase.Data.Location.ToString(),
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
@@ -98,7 +103,7 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
     {
         await this.AddDataSourceAsync();
 
-        string managedIntegrationRuntimeName = null;
+        string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
             // managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();

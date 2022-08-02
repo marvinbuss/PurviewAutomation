@@ -27,13 +27,15 @@ internal class MySqlServerOnboardingClient : IDataSourceOnboardingClient
         this.logger = logger;
     }
 
-    private async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    private async Task<GenericResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+        var resource = await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+
+        return resource.Value;
     }
 
     public async Task AddDataSourceAsync()
@@ -52,8 +54,8 @@ internal class MySqlServerOnboardingClient : IDataSourceOnboardingClient
                 subscriptionId = this.resource.SubscriptionId,
                 resourceGroup = this.resource.ResourceGroupName,
                 resourceName = this.resource.Name,
-                serverEndpoint = $"{mySqlServer.Value.Data.Name}.mysql.database.azure.com",
-                location = mySqlServer.Value.Data.Location.ToString(),
+                serverEndpoint = $"{mySqlServer.Data.Name}.mysql.database.azure.com",
+                location = mySqlServer.Data.Location.ToString(),
                 port = "3306",
                 collection = new
                 {
@@ -88,7 +90,7 @@ internal class MySqlServerOnboardingClient : IDataSourceOnboardingClient
     {
         await this.AddDataSourceAsync();
 
-        string managedIntegrationRuntimeName = null;
+        string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
             managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();

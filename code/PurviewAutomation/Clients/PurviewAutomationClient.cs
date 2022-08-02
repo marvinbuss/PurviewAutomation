@@ -53,13 +53,15 @@ internal class PurviewAutomationClient
         this.managedIntegrationRuntimeName = managedIntegrationRuntimeName;
     }
 
-    public async Task<Azure.Response<GenericResource>> GetResourceAsync()
+    public async Task<GenericResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
 
         // Get resource
-        return await armClient.GetGenericResource(id: this.resource).GetAsync();
+        var resource = await armClient.GetGenericResource(id: new ResourceIdentifier(resourceId: this.resourceId)).GetAsync();
+
+        return resource.Value;
     }
 
     private async Task AddCollectionsAsync(string subscriptionId, string resourceGroupName)
