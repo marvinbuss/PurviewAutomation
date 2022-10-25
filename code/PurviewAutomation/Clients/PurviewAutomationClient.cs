@@ -194,7 +194,7 @@ internal class PurviewAutomationClient
 
         try
         {
-            var response = await dataSourceClient.GetPropertiesAsync(new ());
+            var response = await dataSourceClient.GetPropertiesAsync(new());
             this.logger.LogInformation(message: $"Purview Data Source get response: '{response}'");
 
             using var jsonDocument = JsonDocument.Parse(Utils.GetContentFromResponse(response));
