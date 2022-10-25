@@ -243,7 +243,7 @@ internal class PurviewAutomationClient
             
             if (response.IsError)
             {
-                throw new RequestFailedException("Failed to delete the Purview Data Source");
+                throw new RequestFailedException(status: response.Status, message: "Failed to delete the Purview Data Source");
             }
         }
         catch (RequestFailedException ex)
