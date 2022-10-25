@@ -46,45 +46,25 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
 
         // Get sql server
         var subscription = await armClient.GetSubscriptions().GetAsync(subscriptionId: this.resource.SubscriptionId);
-        var resourceGroup = await subscription.Value.GetResourceGroupAsync(resourceGroupName: this.resource.ResourceGroupName);
-        var sqlServer = await resourceGroup.Value.GetSqlServerAsync(serverName: this.resource.Parent.Name);
-
-        return sqlServer.Value;
+        var sqlServers = subscription.Value.GetSqlServersAsync();
+        await foreach (var sqlServer in sqlServers)
+        {
+            if (sqlServer.HasData && sqlServer.Data.Name.Equals(this.resource.Parent.Name))
+            {
+                return sqlServer;
+            }
+        }
+        return null;
     }
 
     public async Task AddDataSourceAsync()
     {
-        // Get resource
-        var sqlDatabase = await this.GetResourceAsync();
-        var sqlServer = await this.GetParentResourceAsync();
-
-        // Create data source
-        var dataSource = new
-        {
-            name = this.resource.Name,
-            kind = "AzureSqlDatabase",
-            properties = new
-            {
-                resourceId = this.resourceId,
-                subscriptionId = this.resource.SubscriptionId,
-                resourceGroup = this.resource.ResourceGroupName,
-                resourceName = this.resource.Name,
-                serverEndpoint = sqlServer.Data.FullyQualifiedDomainName,
-                location = sqlDatabase.Data.Location.ToString(),
-                collection = new
-                {
-                    referenceName = this.resource.ResourceGroupName,
-                    type = "CollectionReference"
-                }
-            }
-        };
-
-        // Add data source
-        await this.purviewAutomationClient.AddDataSourceAsync(subscriptionId: this.resource.SubscriptionId, resourceGroupName: this.resource.ResourceGroupName, dataSourceName: this.resource.Name, dataSource: dataSource);
+        logger.LogInformation("Azure SQL Database does not have to be onboarded. Only the parent Azure SQL Server must be onboarded.");
     }
 
     public async Task<string> AddScanningManagedPrivateEndpointsAsync()
     {
+        logger.LogInformation("Managed Private Endpoints are not required for Azure SQL Database. Only required for the parent Azure SQL Server.");
         return null;
     }
 
@@ -106,7 +86,7 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
         string managedIntegrationRuntimeName = string.Empty;
         if (useManagedPrivateEndpoints)
         {
-            // managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
+            managedIntegrationRuntimeName = await this.AddScanningManagedPrivateEndpointsAsync();
         }
         if (setupScan)
         {

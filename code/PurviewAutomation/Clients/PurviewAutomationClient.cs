@@ -1,4 +1,5 @@
-﻿using Azure.Analytics.Purview.Administration;
+﻿using Azure;
+using Azure.Analytics.Purview.Administration;
 using Azure.Analytics.Purview.Scanning;
 using Azure.Core;
 using Azure.Identity;
@@ -53,7 +54,7 @@ internal class PurviewAutomationClient
         this.managedIntegrationRuntimeName = managedIntegrationRuntimeName;
     }
 
-    public async Task<GenericResource> GetResourceAsync()
+    internal async Task<GenericResource> GetResourceAsync()
     {
         // Create client
         var armClient = new ArmClient(credential: new DefaultAzureCredential());
@@ -88,8 +89,17 @@ internal class PurviewAutomationClient
                     type = "CollectionReference"
                 }
             };
-            var response = await collectionClient.CreateOrUpdateCollectionAsync(content: RequestContent.Create(serializable: collection));
-            this.logger.LogInformation($"Purview Collection creation response {response}");
+
+            try
+            {
+                var response = await collectionClient.CreateOrUpdateCollectionAsync(content: RequestContent.Create(serializable: collection));
+                this.logger.LogInformation(message: $"Purview Collection creation response {response}");
+            }
+            catch (RequestFailedException ex)
+            {
+                this.logger.LogError(exception: ex, message: $"Creation of Purview Collection '{item.Name}' failed: '{ex.Message}'");
+                throw;
+            }
         }
     }
 
@@ -102,8 +112,16 @@ internal class PurviewAutomationClient
         var dataSourceClient = new PurviewDataSourceClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, credential: new DefaultAzureCredential());
 
         // Add data source
-        var response = await dataSourceClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: dataSource));
-        this.logger.LogInformation($"Purview Data Source creation response: '{response}'");
+        try
+        {
+            var response = await dataSourceClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: dataSource));
+            this.logger.LogInformation(message: $"Purview Data Source creation response: '{response}'");
+        }
+        catch (RequestFailedException ex)
+        {
+            this.logger.LogError(exception: ex, message: $"Purview Data Source creation of resource '{dataSourceName}' failed: '{ex.Message}'");
+            throw;
+        }
     }
 
     internal async Task AddScanAsync(string dataSourceName, object scan, string scanName = "default", bool runScan = false, object trigger = null, object filter = null)
@@ -112,29 +130,82 @@ internal class PurviewAutomationClient
         var scanClient = new PurviewScanClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, scanName: scanName, credential: new DefaultAzureCredential());
 
         // Create scan
-        var scanResponse = await scanClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: scan));
-        this.logger.LogInformation($"Purview scan creation response: '{scanResponse}'");
+        try
+        {
+            var scanResponse = await scanClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: scan));
+            this.logger.LogInformation(message: $"Purview scan creation response: '{scanResponse}'");
+        }
+        catch (RequestFailedException ex)
+        {
+            this.logger.LogError(exception: ex, message: $"Failed to create scan for '{dataSourceName}' with error: '{ex.Message}'");
+            throw;
+        }
 
         // Create trigger
         if (trigger != null)
         {
-            var triggerResponse = await scanClient.CreateOrUpdateTriggerAsync(content: RequestContent.Create(serializable: trigger));
-            this.logger.LogInformation($"Purview trigger creation response: '{triggerResponse}'");
+            try
+            {
+                var triggerResponse = await scanClient.CreateOrUpdateTriggerAsync(content: RequestContent.Create(serializable: trigger));
+                this.logger.LogInformation(message: $"Purview trigger creation response: '{triggerResponse}'");
+            }
+            catch (RequestFailedException ex)
+            {
+                this.logger.LogError(exception: ex, message: $"Failed to create trigger for '{dataSourceName}' with error: '{ex.Message}'");
+                throw;
+            }
         }
 
         // Create filter
         if (filter != null)
         {
-            var filterResponse = await scanClient.CreateOrUpdateFilterAsync(content: RequestContent.Create(serializable: filter));
-            this.logger.LogInformation($"Purview filter creation response: '{filterResponse}'");
+            try
+            {
+                var filterResponse = await scanClient.CreateOrUpdateFilterAsync(content: RequestContent.Create(serializable: filter));
+                this.logger.LogInformation(message: $"Purview filter creation response: '{filterResponse}'");
+            }
+            catch (RequestFailedException ex)
+            {
+                this.logger.LogError(exception: ex, message: $"Failed to create filter for '{dataSourceName}' with error: '{ex.Message}'");
+                throw;
+            }
         }
 
         // Run scan
         if (runScan)
         {
-            var scanRunResponse = await scanClient.RunScanAsync(runId: Guid.NewGuid().ToString(), options: new Azure.RequestOptions(), scanLevel: "Full");
-            this.logger.LogInformation($"Purview scan run creation response: '{scanRunResponse}'");
+            try
+            {
+                var scanRunResponse = await scanClient.RunScanAsync(runId: Guid.NewGuid().ToString(), options: new Azure.RequestOptions(), scanLevel: "Full");
+                this.logger.LogInformation(message: $"Purview scan run creation response: '{scanRunResponse}'");
+            }
+            catch (RequestFailedException ex)
+            {
+                this.logger.LogError(exception: ex, message: $"Failed to create scan for '{dataSourceName}' with error: '{ex.Message}'");
+                throw;
+            }
         }
+    }
+
+    internal async Task<JsonElement> GetDataSourceAsync(string dataSourceName)
+    {
+        // Create client
+        var dataSourceClient = new PurviewDataSourceClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, credential: new DefaultAzureCredential());
+
+        try
+        {
+            var response = await dataSourceClient.GetPropertiesAsync(new());
+            this.logger.LogInformation(message: $"Purview Data Source get response: '{response}'");
+
+            using var jsonDocument = JsonDocument.Parse(Utils.GetContentFromResponse(response));
+            var jsonBody = jsonDocument.RootElement;
+            return jsonBody;
+        }
+        catch (RequestFailedException ex)
+        {
+            this.logger.LogError(exception: ex, message: $"Purview Data Source details of resource '{dataSourceName}' could not be loaded: '{ex.Message}'");
+        }
+        return new JsonElement();
     }
 
     internal async Task RemoveDataSourceAsync(string dataSourceName)
@@ -146,11 +217,15 @@ internal class PurviewAutomationClient
         try
         {
             var response = await dataSourceClient.DeleteAsync();
-            this.logger.LogInformation($"Purview Data Source deletion response: '{response}'");
+            this.logger.LogInformation(message: $"Purview Data Source deletion response: '{response}'");
         }
-        catch (Exception ex)
+        catch (RequestFailedException ex)
         {
-            this.logger.LogInformation($"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful: '{ex.Message}'");
+            this.logger.LogError(exception: ex, message: $"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful because it was already removed: '{ex.Message}'");
+            if (ex.Status != 404)
+            {
+                throw;
+            }
         }
     }
 
@@ -162,33 +237,42 @@ internal class PurviewAutomationClient
         // Get role
         var roleString = PurviewRoleConverter.ConvertRoleToString(role: role);
 
-        // Get metadata policy
-        var metadataPolicy = await metadataPolicyClient.GetMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, options: new());
-        var metadataPolicyJson = JsonDocument.Parse(utf8Json: Utils.GetContentFromResponse(r: metadataPolicy)).RootElement;
-        var options = new JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true
-        };
-        var metadataPolicyObject = JsonSerializer.Deserialize<MetadataPolicy>(element: metadataPolicyJson, options: options);
+            // Get metadata policy
+            var metadataPolicyResponse = await metadataPolicyClient.GetMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, options: new());
 
-        // Add principal Id
-        foreach (var attributerule in metadataPolicyObject.Properties.AttributeRules)
-        {
-            if (attributerule.Id.StartsWith(roleString))
+            var metadataPolicyJson = JsonDocument.Parse(utf8Json: Utils.GetContentFromResponse(r: metadataPolicyResponse)).RootElement;
+            var options = new JsonSerializerOptions
             {
-                foreach (var dnfCondition in attributerule.DnfCondition[0])
+                PropertyNameCaseInsensitive = true
+            };
+            var metadataPolicyObject = JsonSerializer.Deserialize<MetadataPolicy>(element: metadataPolicyJson, options: options);
+
+            // Add principal Id
+            foreach (var attributerule in metadataPolicyObject.Properties.AttributeRules)
+            {
+                if (attributerule.Id.StartsWith(roleString))
                 {
-                    if (dnfCondition.AttributeName.Equals("principal.microsoft.id"))
+                    foreach (var dnfCondition in attributerule.DnfCondition[0])
                     {
-                        dnfCondition.AttributeValueIncludedIn?.Add(principalId);
+                        if (dnfCondition.AttributeName.Equals("principal.microsoft.id"))
+                        {
+                            dnfCondition.AttributeValueIncludedIn?.Add(principalId);
+                        }
                     }
                 }
             }
-        }
 
-        // Create role asignment
-        var response = await metadataPolicyClient.UpdateMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, content: RequestContent.Create(serializable: metadataPolicyObject));
-        this.logger.LogInformation($"Purview collection role assignment response: '{response}'");
+            // Create role asignment
+            var metadataPolicyUpdateResponse = await metadataPolicyClient.UpdateMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, content: RequestContent.Create(serializable: metadataPolicyObject));
+            this.logger.LogInformation(message: $"Purview collection role assignment response: '{metadataPolicyUpdateResponse}'");
+        }
+        catch (RequestFailedException ex)
+        {
+            this.logger.LogError(exception: ex, message: $"Purview role assignment to collection '{rootCollectionName}' unsuccessful: '{ex.Message}'");
+            throw;
+        }
     }
 
     internal async Task<string> CreateManagedPrivateEndpointAsync(string name, string groupId, string resourceId)
@@ -307,7 +391,7 @@ internal class PurviewAutomationClient
         {
             response.EnsureSuccessStatusCode();
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
             this.logger.LogError(exception: ex, message: "HTTP Request failed");
             return false;
