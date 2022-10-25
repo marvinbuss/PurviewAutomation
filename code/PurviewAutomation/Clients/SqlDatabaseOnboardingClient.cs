@@ -59,12 +59,12 @@ internal class SqlDatabaseOnboardingClient : IDataSourceOnboardingClient
 
     public async Task AddDataSourceAsync()
     {
-        logger.LogInformation("Azure SQL Database does not have to be onboarded. Only the Azure SQL Server must be onboarded.");
+        logger.LogInformation("Azure SQL Database does not have to be onboarded. Only the parent Azure SQL Server must be onboarded.");
     }
 
     public async Task<string> AddScanningManagedPrivateEndpointsAsync()
     {
-        logger.LogInformation("Managed Private Endpoints are not required for Azure SQL Database. Only required for the Azure SQL Server.");
+        logger.LogInformation("Managed Private Endpoints are not required for Azure SQL Database. Only required for the parent Azure SQL Server.");
         return null;
     }
 
