@@ -94,11 +94,6 @@ internal class PurviewAutomationClient
             {
                 var response = await collectionClient.CreateOrUpdateCollectionAsync(content: RequestContent.Create(serializable: collection));
                 this.logger.LogInformation(message: $"Purview Collection creation response {response}");
-
-                if (response.IsError)
-                {
-                    throw new RequestFailedException(status: response.Status, message: "Failed to create the Purview Collection");
-                }
             }
             catch (RequestFailedException ex)
             {
@@ -121,11 +116,6 @@ internal class PurviewAutomationClient
         {
             var response = await dataSourceClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: dataSource));
             this.logger.LogInformation(message: $"Purview Data Source creation response: '{response}'");
-
-            if (response.IsError)
-            {
-                throw new RequestFailedException(status: response.Status, message: "Failed to create the Purview Data Source");
-            }
         }
         catch (RequestFailedException ex)
         {
@@ -144,11 +134,6 @@ internal class PurviewAutomationClient
         {
             var scanResponse = await scanClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: scan));
             this.logger.LogInformation(message: $"Purview scan creation response: '{scanResponse}'");
-
-            if (scanResponse.IsError)
-            {
-                throw new RequestFailedException(status: scanResponse.Status, message: "Failed to create the scan");
-            }
         }
         catch (RequestFailedException ex)
         {
@@ -163,11 +148,6 @@ internal class PurviewAutomationClient
             {
                 var triggerResponse = await scanClient.CreateOrUpdateTriggerAsync(content: RequestContent.Create(serializable: trigger));
                 this.logger.LogInformation(message: $"Purview trigger creation response: '{triggerResponse}'");
-
-                if (triggerResponse.IsError)
-                {
-                    throw new RequestFailedException(status: triggerResponse.Status, message: "Failed to create the trigger");
-                }
             }
             catch (RequestFailedException ex)
             {
@@ -183,11 +163,6 @@ internal class PurviewAutomationClient
             {
                 var filterResponse = await scanClient.CreateOrUpdateFilterAsync(content: RequestContent.Create(serializable: filter));
                 this.logger.LogInformation(message: $"Purview filter creation response: '{filterResponse}'");
-
-                if (filterResponse.IsError)
-                {
-                    throw new RequestFailedException(status: filterResponse.Status, message: "Failed to create the filter");
-                }
             }
             catch (RequestFailedException ex)
             {
@@ -203,11 +178,6 @@ internal class PurviewAutomationClient
             {
                 var scanRunResponse = await scanClient.RunScanAsync(runId: Guid.NewGuid().ToString(), options: new Azure.RequestOptions(), scanLevel: "Full");
                 this.logger.LogInformation(message: $"Purview scan run creation response: '{scanRunResponse}'");
-
-                if (scanRunResponse.IsError)
-                {
-                    throw new RequestFailedException(status: scanRunResponse.Status, message: "Failed to create the scan");
-                }
             }
             catch (RequestFailedException ex)
             {
@@ -226,11 +196,6 @@ internal class PurviewAutomationClient
         {
             var response = await dataSourceClient.GetPropertiesAsync(new ());
             this.logger.LogInformation(message: $"Purview Data Source get response: '{response}'");
-
-            if (response.IsError)
-            {
-                throw new RequestFailedException(status: response.Status, message: "Failed to obtain details of the Purview Data Source");
-            }
 
             using var jsonDocument = JsonDocument.Parse(Utils.GetContentFromResponse(response));
             var jsonBody = jsonDocument.RootElement;
@@ -253,11 +218,6 @@ internal class PurviewAutomationClient
         {
             var response = await dataSourceClient.DeleteAsync();
             this.logger.LogInformation(message: $"Purview Data Source deletion response: '{response}'");
-            
-            if (response.IsError)
-            {
-                throw new RequestFailedException(status: response.Status, message: "Failed to delete the Purview Data Source");
-            }
         }
         catch (RequestFailedException ex)
         {
@@ -281,11 +241,6 @@ internal class PurviewAutomationClient
         {
             // Get metadata policy
             var metadataPolicyResponse = await metadataPolicyClient.GetMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, options: new());
-
-            if (metadataPolicyResponse.IsError)
-            {
-                throw new RequestFailedException(status: metadataPolicyResponse.Status, message: "Failed to get the Purview metadata policy");
-            }
 
             var metadataPolicyJson = JsonDocument.Parse(utf8Json: Utils.GetContentFromResponse(r: metadataPolicyResponse)).RootElement;
             var options = new JsonSerializerOptions
@@ -312,11 +267,6 @@ internal class PurviewAutomationClient
             // Create role asignment
             var metadataPolicyUpdateResponse = await metadataPolicyClient.UpdateMetadataPolicyAsync(policyId: this.rootCollectionPolicyId, content: RequestContent.Create(serializable: metadataPolicyObject));
             this.logger.LogInformation(message: $"Purview collection role assignment response: '{metadataPolicyUpdateResponse}'");
-
-            if (metadataPolicyUpdateResponse.IsError)
-            {
-                throw new RequestFailedException(status: metadataPolicyUpdateResponse.Status, message: "Failed to create the role assignment");
-            }
         }
         catch (RequestFailedException ex)
         {
