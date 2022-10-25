@@ -97,7 +97,7 @@ internal class PurviewAutomationClient
 
                 if (response.IsError)
                 {
-                    throw new RequestFailedException("Failed to create the Purview Collection");
+                    throw new RequestFailedException(status: response.Status, message: "Failed to create the Purview Collection");
                 }
             }
             catch (RequestFailedException ex)
@@ -124,7 +124,7 @@ internal class PurviewAutomationClient
 
             if (response.IsError)
             {
-                throw new RequestFailedException("Failed to create the Purview Data Source");
+                throw new RequestFailedException(status: response.Status, message: "Failed to create the Purview Data Source");
             }
         }
         catch (RequestFailedException ex)
@@ -153,7 +153,7 @@ internal class PurviewAutomationClient
 
                 if (triggerResponse.IsError)
                 {
-                    throw new RequestFailedException("Failed to create the trigger");
+                    throw new RequestFailedException(status: triggerResponse.Status, message: "Failed to create the trigger");
                 }
             }
             catch (RequestFailedException ex)
@@ -173,7 +173,7 @@ internal class PurviewAutomationClient
 
                 if (filterResponse.IsError)
                 {
-                    throw new RequestFailedException("Failed to create the filter");
+                    throw new RequestFailedException(status: filterResponse.Status, message: "Failed to create the filter");
                 }
             }
             catch (RequestFailedException ex)
@@ -193,7 +193,7 @@ internal class PurviewAutomationClient
 
                 if (scanRunResponse.IsError)
                 {
-                    throw new RequestFailedException("Failed to create the scan");
+                    throw new RequestFailedException(status: scanRunResponse.Status, message: "Failed to create the scan");
                 }
             }
             catch (RequestFailedException ex)
@@ -216,7 +216,7 @@ internal class PurviewAutomationClient
 
             if (response.IsError)
             {
-                throw new RequestFailedException("Failed to obtain details of the Purview Data Source");
+                throw new RequestFailedException(status: response.Status, message: "Failed to obtain details of the Purview Data Source");
             }
 
             using var jsonDocument = JsonDocument.Parse(Utils.GetContentFromResponse(response));
@@ -271,7 +271,7 @@ internal class PurviewAutomationClient
 
             if (metadataPolicyResponse.IsError)
             {
-                throw new RequestFailedException("Failed to get the Purview metadata policy");
+                throw new RequestFailedException(status: metadataPolicyResponse.Status, message: "Failed to get the Purview metadata policy");
             }
 
             var metadataPolicyJson = JsonDocument.Parse(utf8Json: Utils.GetContentFromResponse(r: metadataPolicyResponse)).RootElement;
@@ -302,7 +302,7 @@ internal class PurviewAutomationClient
 
             if (metadataPolicyUpdateResponse.IsError)
             {
-                throw new RequestFailedException("Failed to create the role assignment");
+                throw new RequestFailedException(status: metadataPolicyUpdateResponse.Status, message: "Failed to create the role assignment");
             }
         }
         catch (RequestFailedException ex)
