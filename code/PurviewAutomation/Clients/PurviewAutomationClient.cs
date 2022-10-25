@@ -140,8 +140,21 @@ internal class PurviewAutomationClient
         var scanClient = new PurviewScanClient(endpoint: new Uri(uriString: this.scanEndpoint), dataSourceName: dataSourceName, scanName: scanName, credential: new DefaultAzureCredential());
 
         // Create scan
-        var scanResponse = await scanClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: scan));
-        this.logger.LogInformation(message: $"Purview scan creation response: '{scanResponse}'");
+        try
+        {
+            var scanResponse = await scanClient.CreateOrUpdateAsync(content: RequestContent.Create(serializable: scan));
+            this.logger.LogInformation(message: $"Purview scan creation response: '{scanResponse}'");
+
+            if (scanResponse.IsError)
+            {
+                throw new RequestFailedException(status: scanResponse.Status, message: "Failed to create the scan");
+            }
+        }
+        catch (RequestFailedException ex)
+        {
+            this.logger.LogError(exception: ex, message: $"Failed to create scan for '{dataSourceName}' with error: '{ex.Message}'");
+            throw;
+        }
 
         // Create trigger
         if (trigger != null)
