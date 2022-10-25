@@ -248,7 +248,7 @@ internal class PurviewAutomationClient
         }
         catch (RequestFailedException ex)
         {
-            this.logger.LogError(exception: ex, message: $"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful: '{ex.Message}'");
+            this.logger.LogError(exception: ex, message: $"Purview Data Source deletion of resource '{dataSourceName}' unsuccessful because it was already removed: '{ex.Message}'");
             if (ex.Status != 404)
             {
                 throw;
