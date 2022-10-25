@@ -49,10 +49,15 @@ internal class SqlServerOnboardingClient : IDataSourceOnboardingClient
         var dataSource = new
         {
             name = this.resource.Name,
-            kind = "SqlServerDatabase",
+            kind = "AzureSqlDatabase",
             properties = new
             {
-                serverEndpoint = this.resource.Name,
+                resourceId = this.resourceId,
+                subscriptionId = this.resource.SubscriptionId,
+                resourceGroup = this.resource.ResourceGroupName,
+                resourceName = this.resource.Name,
+                serverEndpoint = sqlServer.Data.FullyQualifiedDomainName,
+                location = sqlServer.Data.Location.ToString(),
                 collection = new
                 {
                     referenceName = this.resource.ResourceGroupName,
