@@ -24,6 +24,8 @@ For the data source onboarding, the following role assignments in each subscript
 
 For the managed private endpoints, the same role assignments as for the [data source onboarding](#data-source-onboarding) are required. No additional role assignments required for this feature.
 
+You can disable the setup of managed private endpoints in the [application settings](/docs/ApplicationSettings.md).
+
 ## Scanning
 
 For the automated setup of scanning, the role assignments mentioned in [data source onboarding](#data-source-onboarding) are required. The following additional role assignments in each subscription listed in the `eventGridTopicSourceSubscriptions` input parameter are required for the Azure Function:
