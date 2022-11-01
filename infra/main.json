@@ -4,8 +4,8 @@
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.8.9.13224",
-      "templateHash": "4148752540959760465"
+      "version": "0.11.1.770",
+      "templateHash": "1100317251524991231"
     }
   },
   "parameters": {
@@ -214,8 +214,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.8.9.13224",
-              "templateHash": "1524494931754403880"
+              "version": "0.11.1.770",
+              "templateHash": "8989863284796264269"
             }
           },
           "parameters": {
@@ -321,8 +321,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "11837503039389996700"
+                      "version": "0.11.1.770",
+                      "templateHash": "17029181876969708842"
                     }
                   },
                   "parameters": {
@@ -730,8 +730,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "15329105883371307000"
+                      "version": "0.11.1.770",
+                      "templateHash": "8594779481048614074"
                     }
                   },
                   "parameters": {
@@ -808,8 +808,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "17465831138519163694"
+                      "version": "0.11.1.770",
+                      "templateHash": "17000920059548920111"
                     }
                   },
                   "parameters": {
@@ -946,8 +946,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "12090197231972929643"
+                      "version": "0.11.1.770",
+                      "templateHash": "1054368285330968337"
                     }
                   },
                   "parameters": {
@@ -1004,7 +1004,7 @@
                       "name": "[format('{0}/{1}', variables('keyVaultName'), variables('storageConnectionStringSecretName'))]",
                       "properties": {
                         "contentType": "text/plain",
-                        "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('storageName'), listKeys(parameters('storageId'), '2021-06-01').keys[0].value)]",
+                        "value": "[format('DefaultEndpointsProtocol=https;AccountName={0};AccountKey={1};EndpointSuffix=core.windows.net', variables('storageName'), listKeys(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('storageSubscriptionId'), variables('storageResourceGroupName')), 'Microsoft.Storage/storageAccounts', variables('storageName')), '2021-06-01').keys[0].value)]",
                         "attributes": {
                           "enabled": true
                         }
@@ -1062,8 +1062,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "16889757951198505842"
+                      "version": "0.11.1.770",
+                      "templateHash": "7845283894232434598"
                     }
                   },
                   "parameters": {
@@ -1141,7 +1141,7 @@
                             ]
                           },
                           "acrUseManagedIdentityCreds": false,
-                          "alwaysOn": false,
+                          "alwaysOn": true,
                           "functionAppScaleLimit": 200,
                           "http20Enabled": false,
                           "minTlsVersion": "1.2",
@@ -1224,8 +1224,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "10266932321883839942"
+                      "version": "0.11.1.770",
+                      "templateHash": "10269399696083244020"
                     }
                   },
                   "parameters": {
@@ -1349,8 +1349,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "206725666904889541"
+                      "version": "0.11.1.770",
+                      "templateHash": "1083806973195423850"
                     }
                   },
                   "parameters": {
@@ -1383,146 +1383,6 @@
               "dependsOn": [
                 "[resourceId('Microsoft.Resources/deployments', 'function001')]",
                 "[resourceId('Microsoft.Resources/deployments', 'keyVault001')]"
-              ]
-            },
-            {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
-              "name": "functionSubscriptionRoleAssignmentContributor",
-              "subscriptionId": "[subscription().subscriptionId]",
-              "location": "[resourceGroup().location]",
-              "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "role": {
-                    "value": "Contributor"
-                  },
-                  "functionId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "9531252275611733827"
-                    }
-                  },
-                  "parameters": {
-                    "functionId": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "allowedValues": [
-                        "Reader",
-                        "Contributor",
-                        "UserAccessAdministrator"
-                      ]
-                    }
-                  },
-                  "variables": {
-                    "functionSubscriptionId": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[2], subscription().subscriptionId)]",
-                    "functionGroupName": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[4], 'incorrectSegmentLength')]",
-                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]",
-                    "roles": {
-                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
-                      "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
-                      "UserAccessAdministrator": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Authorization/roleAssignments",
-                      "apiVersion": "2020-10-01-preview",
-                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), variables('roles')[parameters('role')]))]",
-                      "properties": {
-                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
-                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), '2021-02-01', 'full').identity.principalId]",
-                        "principalType": "ServicePrincipal"
-                      }
-                    }
-                  ]
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'function001')]"
-              ]
-            },
-            {
-              "type": "Microsoft.Resources/deployments",
-              "apiVersion": "2020-10-01",
-              "name": "functionSubscriptionRoleAssignmentUserAccessAdministrator",
-              "subscriptionId": "[subscription().subscriptionId]",
-              "location": "[resourceGroup().location]",
-              "properties": {
-                "expressionEvaluationOptions": {
-                  "scope": "inner"
-                },
-                "mode": "Incremental",
-                "parameters": {
-                  "role": {
-                    "value": "UserAccessAdministrator"
-                  },
-                  "functionId": {
-                    "value": "[reference(resourceId('Microsoft.Resources/deployments', 'function001')).outputs.functionId.value]"
-                  }
-                },
-                "template": {
-                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-                  "contentVersion": "1.0.0.0",
-                  "metadata": {
-                    "_generator": {
-                      "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "9531252275611733827"
-                    }
-                  },
-                  "parameters": {
-                    "functionId": {
-                      "type": "string"
-                    },
-                    "role": {
-                      "type": "string",
-                      "allowedValues": [
-                        "Reader",
-                        "Contributor",
-                        "UserAccessAdministrator"
-                      ]
-                    }
-                  },
-                  "variables": {
-                    "functionSubscriptionId": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[2], subscription().subscriptionId)]",
-                    "functionGroupName": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[4], 'incorrectSegmentLength')]",
-                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]",
-                    "roles": {
-                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
-                      "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
-                      "UserAccessAdministrator": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
-                    }
-                  },
-                  "resources": [
-                    {
-                      "type": "Microsoft.Authorization/roleAssignments",
-                      "apiVersion": "2020-10-01-preview",
-                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), variables('roles')[parameters('role')]))]",
-                      "properties": {
-                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
-                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), '2021-02-01', 'full').identity.principalId]",
-                        "principalType": "ServicePrincipal"
-                      }
-                    }
-                  ]
-                }
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Resources/deployments', 'function001')]"
               ]
             }
           ],
@@ -1582,8 +1442,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.8.9.13224",
-              "templateHash": "2124650696873285651"
+              "version": "0.11.1.770",
+              "templateHash": "6479576377645729893"
             }
           },
           "parameters": {
@@ -1656,6 +1516,9 @@
           },
           "storageId": {
             "value": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')).outputs.storage001Id.value]"
+          },
+          "purviewId": {
+            "value": "[parameters('purviewId')]"
           }
         },
         "template": {
@@ -1664,8 +1527,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.8.9.13224",
-              "templateHash": "6858594656915106607"
+              "version": "0.11.1.770",
+              "templateHash": "5803050557875839834"
             }
           },
           "parameters": {
@@ -1688,6 +1551,9 @@
               "type": "string"
             },
             "functionId": {
+              "type": "string"
+            },
+            "purviewId": {
               "type": "string"
             }
           },
@@ -1733,8 +1599,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "9372448938021059632"
+                      "version": "0.11.1.770",
+                      "templateHash": "2705612083141799413"
                     }
                   },
                   "parameters": {
@@ -1816,11 +1682,343 @@
                   }
                 }
               }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "functionSubscriptionRoleAssignmentReader",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "role": {
+                    "value": "Reader"
+                  },
+                  "functionId": {
+                    "value": "[parameters('functionId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "10013061247857959113"
+                    }
+                  },
+                  "parameters": {
+                    "functionId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "allowedValues": [
+                        "Reader",
+                        "Contributor",
+                        "UserAccessAdministrator"
+                      ]
+                    }
+                  },
+                  "variables": {
+                    "functionSubscriptionId": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[2], subscription().subscriptionId)]",
+                    "functionGroupName": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[4], 'incorrectSegmentLength')]",
+                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]",
+                    "roles": {
+                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                      "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+                      "UserAccessAdministrator": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), variables('roles')[parameters('role')]))]",
+                      "properties": {
+                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), '2021-02-01', 'full').identity.principalId]",
+                        "principalType": "ServicePrincipal"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "functionSubscriptionRoleAssignmentContributor",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "role": {
+                    "value": "Contributor"
+                  },
+                  "functionId": {
+                    "value": "[parameters('functionId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "10013061247857959113"
+                    }
+                  },
+                  "parameters": {
+                    "functionId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "allowedValues": [
+                        "Reader",
+                        "Contributor",
+                        "UserAccessAdministrator"
+                      ]
+                    }
+                  },
+                  "variables": {
+                    "functionSubscriptionId": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[2], subscription().subscriptionId)]",
+                    "functionGroupName": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[4], 'incorrectSegmentLength')]",
+                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]",
+                    "roles": {
+                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                      "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+                      "UserAccessAdministrator": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), variables('roles')[parameters('role')]))]",
+                      "properties": {
+                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), '2021-02-01', 'full').identity.principalId]",
+                        "principalType": "ServicePrincipal"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "functionSubscriptionRoleAssignmentUserAccessAdministrator",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "role": {
+                    "value": "UserAccessAdministrator"
+                  },
+                  "functionId": {
+                    "value": "[parameters('functionId')]"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "10013061247857959113"
+                    }
+                  },
+                  "parameters": {
+                    "functionId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "allowedValues": [
+                        "Reader",
+                        "Contributor",
+                        "UserAccessAdministrator"
+                      ]
+                    }
+                  },
+                  "variables": {
+                    "functionSubscriptionId": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[2], subscription().subscriptionId)]",
+                    "functionGroupName": "[if(equals(length(split(parameters('functionId'), '/')), 9), split(parameters('functionId'), '/')[4], 'incorrectSegmentLength')]",
+                    "functionName": "[if(equals(length(split(parameters('functionId'), '/')), 9), last(split(parameters('functionId'), '/')), 'incorrectSegmentLength')]",
+                    "roles": {
+                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                      "Contributor": "b24988ac-6180-42a0-ab88-20f7382dd24c",
+                      "UserAccessAdministrator": "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), variables('roles')[parameters('role')]))]",
+                      "properties": {
+                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('functionSubscriptionId'), variables('functionGroupName')), 'Microsoft.Web/sites', variables('functionName')), '2021-02-01', 'full').identity.principalId]",
+                        "principalType": "ServicePrincipal"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "purviewSubscriptionRoleAssignmentReader",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "purviewId": {
+                    "value": "[parameters('purviewId')]"
+                  },
+                  "role": {
+                    "value": "Reader"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "6716362017176312298"
+                    }
+                  },
+                  "parameters": {
+                    "purviewId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "allowedValues": [
+                        "Reader",
+                        "StorageBlobDataReader"
+                      ]
+                    }
+                  },
+                  "variables": {
+                    "purviewSubscriptionId": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[2], subscription().subscriptionId)]",
+                    "purviewResourceGroupName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[4], 'incorrectSegmentLength')]",
+                    "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
+                    "roles": {
+                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                      "StorageBlobDataReader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), variables('roles')[parameters('role')]))]",
+                      "properties": {
+                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), '2021-07-01', 'full').identity.principalId]",
+                        "principalType": "ServicePrincipal"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Resources/deployments",
+              "apiVersion": "2020-10-01",
+              "name": "purviewSubscriptionRoleAssignmentStorageBlobReader",
+              "subscriptionId": "[subscription().subscriptionId]",
+              "location": "[resourceGroup().location]",
+              "properties": {
+                "expressionEvaluationOptions": {
+                  "scope": "inner"
+                },
+                "mode": "Incremental",
+                "parameters": {
+                  "purviewId": {
+                    "value": "[parameters('purviewId')]"
+                  },
+                  "role": {
+                    "value": "StorageBlobDataReader"
+                  }
+                },
+                "template": {
+                  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+                  "contentVersion": "1.0.0.0",
+                  "metadata": {
+                    "_generator": {
+                      "name": "bicep",
+                      "version": "0.11.1.770",
+                      "templateHash": "6716362017176312298"
+                    }
+                  },
+                  "parameters": {
+                    "purviewId": {
+                      "type": "string"
+                    },
+                    "role": {
+                      "type": "string",
+                      "allowedValues": [
+                        "Reader",
+                        "StorageBlobDataReader"
+                      ]
+                    }
+                  },
+                  "variables": {
+                    "purviewSubscriptionId": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[2], subscription().subscriptionId)]",
+                    "purviewResourceGroupName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[4], 'incorrectSegmentLength')]",
+                    "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
+                    "roles": {
+                      "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
+                      "StorageBlobDataReader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
+                    }
+                  },
+                  "resources": [
+                    {
+                      "type": "Microsoft.Authorization/roleAssignments",
+                      "apiVersion": "2020-10-01-preview",
+                      "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), variables('roles')[parameters('role')]))]",
+                      "properties": {
+                        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
+                        "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), '2021-07-01', 'full').identity.principalId]",
+                        "principalType": "ServicePrincipal"
+                      }
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
       },
       "dependsOn": [
+        "eventsResourceGroups",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')]"
       ]
     },
@@ -1859,8 +2057,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.8.9.13224",
-              "templateHash": "4580269201822273861"
+              "version": "0.11.1.770",
+              "templateHash": "13836848903953131458"
             }
           },
           "parameters": {
@@ -1913,8 +2111,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "6683075018497381452"
+                      "version": "0.11.1.770",
+                      "templateHash": "17732490308701504505"
                     }
                   },
                   "parameters": {
@@ -1968,8 +2166,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "17764522565369383111"
+                      "version": "0.11.1.770",
+                      "templateHash": "1420565149061626429"
                     }
                   },
                   "parameters": {
@@ -2032,8 +2230,8 @@
                   "metadata": {
                     "_generator": {
                       "name": "bicep",
-                      "version": "0.8.9.13224",
-                      "templateHash": "10557827775759437549"
+                      "version": "0.11.1.770",
+                      "templateHash": "17803646937144462883"
                     }
                   },
                   "parameters": {
@@ -2058,7 +2256,7 @@
                     }
                   },
                   "variables": {
-                    "$fxv#0": "# Licensed under the MIT license.\r\n\r\n# Define script arguments\r\n[CmdletBinding()]\r\nparam (\r\n    [Parameter(Mandatory = $true)]\r\n    [ValidateNotNullOrEmpty()]\r\n    [string]\r\n    $PurviewId,\r\n\r\n    [Parameter(Mandatory = $false)]\r\n    [string[]]\r\n    $PurviewRootCollectionAdmins = @(),\r\n\r\n    [Parameter(Mandatory=$false)]\r\n    [Switch]\r\n    $SetPurviewAccountAsDefault\r\n)\r\n\r\n# Install Required Module\r\nWrite-Output \"Installing Required Module\"\r\nSet-PSRepository `\r\n    -Name PSGallery `\r\n    -InstallationPolicy Trusted\r\nInstall-Module `\r\n    -Name Az.Purview `\r\n    -Repository PSGallery `\r\n    -Force\r\n\r\n# Define Parameters\r\nWrite-Output \"Defining Parameters\"\r\n$tenantId = (Get-AzContext).Tenant.Id\r\n$purviewSubscriptionId = $PurviewId.Split(\"/\")[2]\r\n$purviewResourceGroupName = $PurviewId.Split(\"/\")[4]\r\n$purviewAccountName = $PurviewId.Split(\"/\")[8]\r\n\r\nif ($SetPurviewAccountAsDefault) {\r\n    # Set Purview Account as Default in Tenant\r\n    Write-Output \"Setting Purview Account as Default in Tenant\"\r\n    Set-AzPurviewDefaultAccount `\r\n        -ScopeTenantId $tenantId `\r\n        -ScopeType \"Tenant\" `\r\n        -Scope $tenantId `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName\r\n} else {\r\n    # NOT Set Purview Account as Default in Tenant\r\n    Write-Output \"NOT Setting Purview Account as Default in Tenant\"\r\n}\r\n\r\nforeach ($purviewRootCollectionAdmin in $PurviewRootCollectionAdmins) {\r\n    # Set Purview Root Collection Admin\r\n    Write-Output \"Setting Purview Root Collection Admin '${purviewRootCollectionAdmin}'\"\r\n    Add-AzPurviewAccountRootCollectionAdmin `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName `\r\n        -ObjectId $purviewRootCollectionAdmin\r\n}",
+                    "$fxv#0": "# Licensed under the MIT license.\r\n\r\n# Define script arguments\r\n[CmdletBinding()]\r\nparam (\r\n    [Parameter(Mandatory = $true)]\r\n    [ValidateNotNullOrEmpty()]\r\n    [string]\r\n    $PurviewId,\r\n\r\n    [Parameter(Mandatory = $false)]\r\n    [string[]]\r\n    $PurviewRootCollectionAdmins = @(),\r\n\r\n    [Parameter(Mandatory=$false)]\r\n    [Switch]\r\n    $SetPurviewAccountAsDefault\r\n)\r\n\r\n# Install Required Module\r\nWrite-Output \"Installing Required Module\"\r\nSet-PSRepository `\r\n    -Name PSGallery `\r\n    -InstallationPolicy Trusted\r\nInstall-Module `\r\n    -Name Az.Purview `\r\n    -Repository PSGallery `\r\n    -Force\r\n\r\n# Define Parameters\r\nWrite-Output \"Defining Parameters\"\r\n$tenantId = (Get-AzContext).Tenant.Id\r\n$purviewSubscriptionId = $PurviewId.Split(\"/\")[2]\r\n$purviewResourceGroupName = $PurviewId.Split(\"/\")[4]\r\n$purviewAccountName = $PurviewId.Split(\"/\")[8]\r\n\r\nif ($SetPurviewAccountAsDefault) {\r\n    # Set Purview Account as Default in Tenant\r\n    Write-Output \"Setting Purview Account as Default in Tenant\"\r\n    Set-AzPurviewDefaultAccount `\r\n        -ScopeTenantId $tenantId `\r\n        -ScopeType \"Tenant\" `\r\n        -Scope $tenantId `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName\r\n} else {\r\n    # NOT Set Purview Account as Default in Tenant\r\n    Write-Output \"NOT Setting Purview Account as Default in Tenant\"\r\n}\r\n\r\nforeach ($purviewRootCollectionAdmin in $PurviewRootCollectionAdmins) {\r\n    # Set Purview Root Collection Admin\r\n    Write-Output \"Setting Purview Root Collection Admin '${purviewRootCollectionAdmin}'\"\r\n    Add-AzPurviewAccountRootCollectionAdmin `\r\n        -SubscriptionId $purviewSubscriptionId `\r\n        -ResourceGroupName $purviewResourceGroupName `\r\n        -AccountName $purviewAccountName `\r\n        -ObjectId $purviewRootCollectionAdmin\r\n}\r\n",
                     "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
                     "purviewSetupName": "[format('{0}-setup', variables('purviewName'))]",
                     "purviewRootCollectionAdminsInput": "[replace(replace(string(parameters('purviewRootCollectionAdminObjectIds')), '[', ''), ']', '')]"
@@ -2108,144 +2306,6 @@
         "[subscriptionResourceId('Microsoft.Resources/resourceGroups', variables('automationResourceGroupName'))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', subscription().subscriptionId, variables('functionResourceGroupName')), 'Microsoft.Resources/deployments', 'functionResources')]"
       ]
-    },
-    {
-      "copy": {
-        "name": "purviewSubscriptionRoleAssignmentReader",
-        "count": "[length(parameters('eventGridTopicSourceSubscriptions'))]"
-      },
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "purviewSubscriptionRoleAssignmentReader",
-      "subscriptionId": "[parameters('eventGridTopicSourceSubscriptions')[copyIndex()].subscriptionId]",
-      "location": "[deployment().location]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "purviewId": {
-            "value": "[parameters('purviewId')]"
-          },
-          "role": {
-            "value": "Reader"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.8.9.13224",
-              "templateHash": "654393051670496928"
-            }
-          },
-          "parameters": {
-            "purviewId": {
-              "type": "string"
-            },
-            "role": {
-              "type": "string",
-              "allowedValues": [
-                "Reader",
-                "StorageBlobDataReader"
-              ]
-            }
-          },
-          "variables": {
-            "purviewSubscriptionId": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[2], subscription().subscriptionId)]",
-            "purviewResourceGroupName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[4], 'incorrectSegmentLength')]",
-            "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
-            "roles": {
-              "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
-              "StorageBlobDataReader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2020-10-01-preview",
-              "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), variables('roles')[parameters('role')]))]",
-              "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
-                "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), '2021-07-01', 'full').identity.principalId]",
-                "principalType": "ServicePrincipal"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "copy": {
-        "name": "purviewSubscriptionRoleAssignmentStorageBlobReader",
-        "count": "[length(parameters('eventGridTopicSourceSubscriptions'))]"
-      },
-      "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2020-10-01",
-      "name": "purviewSubscriptionRoleAssignmentStorageBlobReader",
-      "subscriptionId": "[parameters('eventGridTopicSourceSubscriptions')[copyIndex()].subscriptionId]",
-      "location": "[deployment().location]",
-      "properties": {
-        "expressionEvaluationOptions": {
-          "scope": "inner"
-        },
-        "mode": "Incremental",
-        "parameters": {
-          "purviewId": {
-            "value": "[parameters('purviewId')]"
-          },
-          "role": {
-            "value": "StorageBlobDataReader"
-          }
-        },
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "metadata": {
-            "_generator": {
-              "name": "bicep",
-              "version": "0.8.9.13224",
-              "templateHash": "654393051670496928"
-            }
-          },
-          "parameters": {
-            "purviewId": {
-              "type": "string"
-            },
-            "role": {
-              "type": "string",
-              "allowedValues": [
-                "Reader",
-                "StorageBlobDataReader"
-              ]
-            }
-          },
-          "variables": {
-            "purviewSubscriptionId": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[2], subscription().subscriptionId)]",
-            "purviewResourceGroupName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), split(parameters('purviewId'), '/')[4], 'incorrectSegmentLength')]",
-            "purviewName": "[if(greaterOrEquals(length(split(parameters('purviewId'), '/')), 9), last(split(parameters('purviewId'), '/')), 'incorrectSegmentLength')]",
-            "roles": {
-              "Reader": "acdd72a7-3385-48ef-bd42-f606fba81ae7",
-              "StorageBlobDataReader": "2a2b9908-6ea1-4ae2-8e65-a410df84e7d1"
-            }
-          },
-          "resources": [
-            {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2020-10-01-preview",
-              "name": "[guid(uniqueString(subscription().subscriptionId, extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), variables('roles')[parameters('role')]))]",
-              "properties": {
-                "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('roles')[parameters('role')])]",
-                "principalId": "[reference(extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('purviewSubscriptionId'), variables('purviewResourceGroupName')), 'Microsoft.Purview/accounts', variables('purviewName')), '2021-07-01', 'full').identity.principalId]",
-                "principalType": "ServicePrincipal"
-              }
-            }
-          ]
-        }
-      }
     }
   ],
   "outputs": {
