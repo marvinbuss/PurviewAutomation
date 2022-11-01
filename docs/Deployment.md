@@ -27,7 +27,7 @@ The following must be available to deploy the solution inside your Azure environ
 - For the deployment, please choose one of the **Supported Regions**.
 - It is also expected that a few resources have been deployed upfront. This includes:
   - A Vnet with two subnets, whereas one needs to have `privateEndpointNetworkPolicies` disabled and the other one needs to be delegated to `Microsoft.Web/serverFarms`.
-  - An Azure Purview account in one of the supported regions.
+  - A Microsoft Purview account in one of the supported regions.
   - Private DNS Zones for blob storage, file storage, and key vault.
 
 ### (Optional) Deployment of required services

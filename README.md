@@ -1,8 +1,8 @@
-# Purview Event-driven Automation
+# Microsoft Purview Event-driven Automation
 
 ---
 
-_This solution will simplify data governance tasks in an organization that uses Purview as its core data catalog._
+_This solution will simplify data governance tasks in an organization that uses Microsoft Purview as its core data catalog._
 
 ---
 
@@ -11,7 +11,7 @@ In a decentralized Data Platform like the [Data Management & Analytics Scenario]
 The following automation is being taken care of by this solution:
 
 1. Discovery of Data Sources within the Data Platform.
-2. Onboarding of Data Sources within the respective Purview Collection.
+2. Onboarding of Data Sources within the respective Microsoft Purview Collection.
 3. Setup of Managed Private Endpoints onto the managed virtual network inside Purview.
 4. Setup of Scanning and Triggers for Data Sources.
 5. Setup of Lineage for supported Data Sources (Synapse, Data Factory, etc.).
@@ -20,7 +20,7 @@ Below you will find some of the core capabilities:
 
 ## Event-driven onboarding of Data Sources
 
-The solution onboards data sources automatically to a Purview collection when a new data source gets created within an Azure subscription. The a collection structure will be automatically created within your Purview account.
+The solution onboards data sources automatically to a Microsoft Purview collection when a new data source gets created within an Azure subscription. The a collection structure will be automatically created within your Purview account.
 
 ![Event-driven onboarding of Data Sources](/docs/images/PurviewOnboarding.gif)
 
