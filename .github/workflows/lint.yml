@@ -31,3 +31,4 @@ jobs:
           VALIDATE_JSON: false
           FILTER_REGEX_EXCLUDE: (/.devcontainer/|/reference/)
           VALIDATE_YAML: false
+          VALIDATE_GITLEAKS: false
