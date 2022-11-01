@@ -20,7 +20,7 @@ resource function 'Microsoft.Web/sites@2021-02-01' existing = {
   name: functionName
 }
 
-resource keyVaultRoleAssignmentBackend 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource functionRoleAssignmentKeyVault 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid(uniqueString(keyVault.id, function.id))
   scope: keyVault
   properties: {

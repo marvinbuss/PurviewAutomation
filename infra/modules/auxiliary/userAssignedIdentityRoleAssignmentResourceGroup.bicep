@@ -18,7 +18,7 @@ resource userAssignedIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@
   scope:  resourceGroup(userAssignedIdentitySubscriptionId, userAssignedIdentityResourceGroupName)
 }
 
-resource resourceGroupRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
+resource userAssignedIdentityRoleAssignment 'Microsoft.Authorization/roleAssignments@2020-10-01-preview' = {
   name: guid(uniqueString(resourceGroup().id, userAssignedIdentity.id))
   scope: resourceGroup()
   properties: {
