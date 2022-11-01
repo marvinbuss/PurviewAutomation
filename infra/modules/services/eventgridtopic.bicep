@@ -49,6 +49,7 @@ resource eventGridEventSubscription 'Microsoft.EventGrid/systemTopics/eventSubsc
     destination: {
       endpointType: 'AzureFunction'
       properties: {
+        #disable-next-line use-resource-id-functions
         resourceId: '${functionId}/functions/PurviewAutomation'
         maxEventsPerBatch: 1
         preferredBatchSizeInKilobytes: 64

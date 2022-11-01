@@ -113,29 +113,12 @@ module function001AppSettings 'services/functionAppSettings.bicep' = {
   }
 }
 
+// Role assignments
 module roleAssignmentFunctionKeyVault 'auxiliary/functionRoleAssignmentKeyVault.bicep' = {
   name: 'roleAssignmentFunctionKeyVault'
   scope: resourceGroup()
   params: {
     keyVaultId: keyVault001.outputs.keyvaultId
-    functionId: function001.outputs.functionId
-  }
-}
-
-module functionSubscriptionRoleAssignmentContributor 'auxiliary/functionRoleAssignmentSubscription.bicep' = {
-  name: 'functionSubscriptionRoleAssignmentContributor'
-  scope: subscription()
-  params: {
-    role: 'Contributor'
-    functionId: function001.outputs.functionId
-  }
-}
-
-module functionSubscriptionRoleAssignmentUserAccessAdministrator 'auxiliary/functionRoleAssignmentSubscription.bicep' = {
-  name: 'functionSubscriptionRoleAssignmentUserAccessAdministrator'
-  scope: subscription()
-  params: {
-    role: 'UserAccessAdministrator'
     functionId: function001.outputs.functionId
   }
 }

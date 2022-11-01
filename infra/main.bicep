@@ -65,7 +65,7 @@ var functionResourceGroupName = '${name}-function'
 var eventsResourceGroupName = '${name}-events'
 var automationResourceGroupName = '${name}-automation'
 
-// Resources
+// Function Resources
 resource functionResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: functionResourceGroupName
   location: location
@@ -95,6 +95,7 @@ module functionResources 'modules/function.bicep' = {
   }
 }
 
+// Event Resources
 module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
   name: 'eventsResourceGroup${padLeft(index + 1, 3, '0')}'
   scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
@@ -108,6 +109,9 @@ module eventsResourceGroups 'modules/auxiliary/createResourceGroup.bicep' = [for
 module eventsResources 'modules/events.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
   name: 'eventsResources${padLeft(index + 1, 3, '0')}'
   scope: resourceGroup(eventGridTopicSourceSubscription.subscriptionId, eventsResourceGroupName)
+  dependsOn: [
+    eventsResourceGroups
+  ]
   params: {
     prefix: name
     tags: tagsJoined
@@ -116,9 +120,11 @@ module eventsResources 'modules/events.bicep' = [for (eventGridTopicSourceSubscr
     eventGridTopicDeadLetterStorageAccountContainerName: eventGridTopicDeadLetterStorageAccountContainerName
     functionId: functionResources.outputs.function001Id
     storageId: functionResources.outputs.storage001Id
+    purviewId: purviewId
   }
 }]
 
+// Automation Resources
 resource automationResourceGroup 'Microsoft.Resources/resourceGroups@2021-04-01' = {
   name: automationResourceGroupName
   location: location
@@ -139,25 +145,6 @@ module automationResources 'modules/automation.bicep' = {
     ]
   }
 }
-
-// Role assignment
-module purviewSubscriptionRoleAssignmentReader 'modules/auxiliary/purviewRoleAssignmentSubscription.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
-  name: 'purviewSubscriptionRoleAssignmentReader'
-  scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
-  params: {
-    purviewId: purviewId
-    role: 'Reader'
-  }
-}]
-
-module purviewSubscriptionRoleAssignmentStorageBlobReader 'modules/auxiliary/purviewRoleAssignmentSubscription.bicep' = [for (eventGridTopicSourceSubscription, index) in eventGridTopicSourceSubscriptions: {
-  name: 'purviewSubscriptionRoleAssignmentStorageBlobReader'
-  scope: subscription(eventGridTopicSourceSubscription.subscriptionId)
-  params: {
-    purviewId: purviewId
-    role: 'StorageBlobDataReader'
-  }
-}]
 
 // Outputs
 output function001Name string = functionResources.outputs.function001Name

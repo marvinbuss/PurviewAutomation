@@ -64,7 +64,7 @@ resource storageConnectionString 'Microsoft.KeyVault/vaults/secrets@2021-11-01-p
   name: storageConnectionStringSecretName
   properties: {
     contentType: 'text/plain'
-    value: 'DefaultEndpointsProtocol=https;AccountName=${storageName};AccountKey=${listKeys(storageId, '2021-06-01').keys[0].value};EndpointSuffix=core.windows.net'
+    value: 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${listKeys(storage.id, '2021-06-01').keys[0].value};EndpointSuffix=core.windows.net'
     attributes: {
       enabled: true
     }
