@@ -22,7 +22,7 @@ jobs:
       # Lint code base
       - name: Lint
         id: arm_lint
-        uses: github/super-linter@v4
+        uses: github/super-linter@v5
         env:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
